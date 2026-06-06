@@ -1,4 +1,5 @@
 #include "lib_play_mp3.hpp"
+#include <iostream>
 
 LibPlayMP3::LibPlayMP3()
 {
@@ -13,7 +14,7 @@ LibPlayMP3::LibPlayMP3()
                                  std::default_delete<char[]>());
 }
 
-void LibPlayMP3::music(char *mp3)
+void LibPlayMP3::music(const char *mp3)
 {
   track = mp3;
   mpg123_open(mh, mp3);

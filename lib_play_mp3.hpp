@@ -1,14 +1,16 @@
 #pragma once
 
+#include "utils.h"
 #include <ao/ao.h>
 #include <memory>
 #include <mpg123.h>
+#include <string>
 
 class LibPlayMP3
 {
   // Primitive types
   std::size_t buffer_size, done;
-  int driver, err, channels, encoding;
+  i32 driver, err, channels, encoding;
   long rate;
   std::string track;
 
@@ -23,6 +25,6 @@ class LibPlayMP3
 public:
   LibPlayMP3();
   ~LibPlayMP3();
-  void music(char *);
+  void music(const char *);
   void play();
 };
