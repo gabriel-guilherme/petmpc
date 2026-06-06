@@ -6,7 +6,7 @@
 #include <mpg123.h>
 #include <string>
 
-class LibPlayMP3
+class MPlayer
 {
   // Primitive types
   std::size_t buffer_size, done;
@@ -23,8 +23,8 @@ class LibPlayMP3
   ao_device *dev;
 
 public:
-  LibPlayMP3();
-  ~LibPlayMP3();
+  MPlayer();
+  ~MPlayer();
   void music(const char *);
   void play();
 };

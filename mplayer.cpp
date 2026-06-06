@@ -1,7 +1,7 @@
-#include "lib_play_mp3.hpp"
+#include "mplayer.hpp"
 #include <iostream>
 
-LibPlayMP3::LibPlayMP3()
+MPlayer::MPlayer()
 {
   track = "";
   ao_initialize();
@@ -14,7 +14,7 @@ LibPlayMP3::LibPlayMP3()
                                  std::default_delete<char[]>());
 }
 
-void LibPlayMP3::music(const char *mp3)
+void MPlayer::music(const char *mp3)
 {
   track = mp3;
   mpg123_open(mh, mp3);
@@ -28,7 +28,7 @@ void LibPlayMP3::music(const char *mp3)
   dev = ao_open_live(driver, &format, NULL);
 }
 
-void LibPlayMP3::play()
+void MPlayer::play()
 {
   std::cout << "\033[33;1m\u25B6 Playing the song: \033[35;1m ";
   std::cout << track << "\033[m\n";
@@ -39,7 +39,7 @@ void LibPlayMP3::play()
   }
 }
 
-LibPlayMP3::~LibPlayMP3()
+MPlayer::~MPlayer()
 {
   ao_close(dev);
   mpg123_close(mh);

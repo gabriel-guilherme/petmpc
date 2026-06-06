@@ -1,4 +1,4 @@
-#include "lib_play_mp3.hpp"
+#include "mplayer.hpp"
 #include "music.hpp"
 #include <format>
 #include <fstream>
@@ -56,7 +56,7 @@ int main(int argc, char **argv)
               << s.second.get()->to_string();
   }
 
-  auto p = std::make_unique<LibPlayMP3>();
+  auto p = std::make_unique<MPlayer>();
   auto m = songs->at(0).get()->get_path();
   p->music(m.c_str());
   p->play();
