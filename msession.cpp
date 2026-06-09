@@ -2,16 +2,16 @@
 #include "string"
 #include <format>
 #include <fstream>
-#include <iostream>
 #include <memory>
 #include <sstream>
 
 u8 MSession::init(char **argv)
 {
+  clrscr();
   std::string line, path = ASSETS_STR + "database.csv";
   m_database =
       std::make_unique<std::unordered_map<u16, std::shared_ptr<Music>>>();
-  m_queue = std::make_unique<std::vector<std::weak_ptr<Music>>>();
+  m_queue = std::make_unique<std::list<std::weak_ptr<Music>>>();
 
   std::ifstream ifstream(path);
   if (!ifstream.is_open())
@@ -36,15 +36,64 @@ u8 MSession::init(char **argv)
 
       auto new_music =
           std::make_shared<Music>(std::move(t), std::move(g), f, u);
-      m_database->insert({last_id++, std::move(new_music)});
+      m_database->insert({m_last_id++, std::move(new_music)});
     }
   }
 
-  for (auto s : *m_database)
-  {
-    std::cout << "song " << std::to_string(s.first) << ": "
-              << s.second.get()->to_string();
-  }
+  m_options.insert({0, "Sair"});
+  m_options.insert({1, "Exibir biblioteca"});
+  m_options.insert({2, "Exibir fila"});
+  m_options.insert({3, "Buscar música na biblioteca"});
+  m_options.insert({4, "Adicionar música à fila"});
+  m_options.insert({5, "Ordenar fila"});
+  m_options.insert({9, "Estatísticas"});
+
+  std::cout << "[PETMPC]\n";
 
   return 0;
+}
+
+void MSession::display_songs()
+{
+  std::cout << "== BIBLIOTECA == \n";
+  for (auto music : *m_database)
+  {
+    std::cout << music.second.get()->to_string();
+  }
+  std::cout << "== \n";
+}
+
+void MSession::menu()
+{
+  std::cout << "== MENU ==\n";
+  std::cout << "Selecione uma das opções.\n";
+  for (auto o : m_options)
+  {
+    std::cout << std::format("[{}] {}\n", o.first, o.second);
+  }
+}
+
+void MSession::end()
+{
+  std::cout << "Fechando aplicação..\n";
+
+  // TODO: deletar recursos
+}
+
+void MSession::display_queue()
+{
+  if (m_queue->empty())
+  {
+    std::cout << "Fila de reprodução vazia.\n";
+    return;
+  }
+
+  std::cout << "== FILA DE REPRODUÇÃO ==\n";
+  for (auto q : *m_queue)
+  {
+    if (auto m = q.lock())
+    {
+      std::cout << m->to_string() << "\n";
+    }
+  }
 }
