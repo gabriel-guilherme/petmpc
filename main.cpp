@@ -1,3 +1,4 @@
+#include "mplayer.hpp"
 #include "msession.hpp"
 #include <iostream>
 
@@ -42,6 +43,23 @@ int main(int argc, char **argv)
       std::cout << "Qual será o critério de busca? \n";
       std::cout << "";
       break;
+    case 4:
+    {
+      int id;
+      std::cout << "Insira o Id da música: ";
+      std::cin >> id; // TODO: ver a necessidade de criar um overload pra isso
+      session.add_to_queue((u8)id);
+      break;
+    }
+    case 5:
+    {
+      // TODO
+    }
+    case 6:
+    {
+      session.play();
+      break;
+    }
 
     default:
       std::cout << "Opção inválida, tente novamente.\n";
@@ -49,11 +67,6 @@ int main(int argc, char **argv)
     }
     // TODO: lógica
   }
-
-  // auto p = std::make_unique<MPlayer>();
-  // auto m = session.find_music_on_database(5)->get_path();
-  // p->music(m.c_str());
-  // p->play();
 
   return EXIT_SUCCESS;
 }

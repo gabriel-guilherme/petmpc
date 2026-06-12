@@ -1,15 +1,16 @@
 #include "music.hpp"
 #include <sstream>
 
-Music::Music(std::string &&t, std::string &&g, float d, u16 y)
-    : title(t), genre(g), duration(d), year(y)
+Music::Music(u16 i, std::string &&t, std::string &&g, float d, u16 y)
+    : id(i), title(t), genre(g), duration(d), year(y)
 {
 }
 
 const std::string Music::to_string()
 {
   std::stringstream ss;
-  ss << title << " - " << year << " [" << duration << "] \n";
+  ss << "(" << id << ")" << title << " - " << year << " [" << duration
+     << "] \n";
   return ss.str();
 }
 
