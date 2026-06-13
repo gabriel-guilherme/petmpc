@@ -6,14 +6,14 @@ int main(int argc, char **argv)
 {
   if (argc != 1)
   {
-    std::cerr << "Usage: ./petmpc\n";
+    std::cerr << "Uso: ./petmpc\n";
     return EXIT_FAILURE;
   }
 
   MSession session;
   if (session.init(argv) != 0)
   {
-    std::cerr << "Error during initialization..\n";
+    std::cerr << "Erro na inicialização..\n";
   }
 
   int opt = 99;
@@ -42,22 +42,29 @@ int main(int argc, char **argv)
     case 3:
       std::cout << "Qual será o critério de busca? \n";
       std::cout << "";
+      // TODO
       break;
     case 4:
     {
       int id;
       std::cout << "Insira o Id da música: ";
-      std::cin >> id; // TODO: ver a necessidade de criar um overload pra isso
+      std::cin >> id;
       session.add_to_queue((u8)id);
       break;
     }
     case 5:
     {
-      // TODO
+      session.sort_queue();
+      break;
     }
     case 6:
     {
       session.play();
+      break;
+    }
+    case 7:
+    {
+      session.clear_queue();
       break;
     }
 

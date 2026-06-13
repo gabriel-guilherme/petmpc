@@ -17,4 +17,5 @@ public:
   const std::string to_string();
   const std::string get_path() const;
   const u16 get_id() { return id; };
+  const std::string get_title() { return title; }
 };

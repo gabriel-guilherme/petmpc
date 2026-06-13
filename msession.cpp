@@ -1,7 +1,9 @@
 #include "msession.hpp"
+#include "sortingLib/sorting.hpp"
 #include "string"
 #include <format>
 #include <fstream>
+#include <future>
 #include <memory>
 #include <sstream>
 
@@ -10,7 +12,7 @@ u8 MSession::init(char **argv)
   clrscr();
   std::string line, path = ASSETS_STR + "database.csv";
   m_database = std::make_unique<std::unordered_set<std::shared_ptr<Music>>>();
-  m_queue = std::make_unique<std::list<std::weak_ptr<Music>>>();
+  m_queue = std::make_unique<std::vector<std::weak_ptr<Music>>>();
   m_player = std::make_unique<MPlayer>();
 
   std::ifstream ifstream(path);
@@ -47,6 +49,7 @@ u8 MSession::init(char **argv)
   m_options.insert({4, "Adicionar música à fila"});
   m_options.insert({5, "Ordenar fila"});
   m_options.insert({6, "Reproduzir"});
+  m_options.insert({7, "Limpar fila"});
   m_options.insert({9, "Estatísticas"});
 
   std::cout << "[PETMPC]\n";
@@ -101,8 +104,22 @@ void MSession::add_to_queue(u8 id)
 
 void MSession::clear_queue()
 {
-  m_queue = nullptr;
-  m_current.reset(); // ??
+  m_queue->clear();
+  m_current.reset();
+}
+
+void MSession::sort_queue()
+{
+  sa::insertion(m_queue->data(), m_queue->data() + m_queue->size(),
+                [](std::weak_ptr<Music> &pt1, std::weak_ptr<Music> &pt2)
+                {
+                  auto m1 = pt1.lock();
+                  auto m2 = pt2.lock();
+                  if (m1 && m2)
+                    return m1->get_title() < m2->get_title() ? true : false;
+
+                  return m1 != nullptr;
+                });
 }
 
 void MSession::display_queue()
@@ -127,13 +144,30 @@ void MSession::play()
 {
   if (m_queue->empty())
   {
-    std::cout << "Fila de reprodução vazia, adicione 1 música antes.";
+    std::cout
+        << "Fila de reprodução vazia, adicione ao menos 1 música antes.\n";
     return;
   }
-  m_current = m_queue->front();
-  if (auto value = m_current.lock())
+
+  std::future<bool> result =
+      std::async(std::launch::async, &MSession::play_loop,
+                 this); // ver alguma forma de liberar a UI pro user
+}
+
+bool MSession::play_loop()
+{
+  auto duplicate = *m_queue;
+
+  for (auto it = duplicate.begin(); it != duplicate.end(); it++)
   {
-    m_player->music(value->get_path().c_str());
-    m_player->play();
+    m_current = *it;
+    if (auto value = m_current.lock())
+    {
+      m_player->music(value->get_path().c_str());
+      m_player->play();
+      m_queue->erase(m_queue->begin());
+    }
   }
+
+  return true;
 }
