@@ -1,3 +1,4 @@
+#include "mplayer.hpp"
 #include "msession.hpp"
 #include <iostream>
 
@@ -5,14 +6,14 @@ int main(int argc, char **argv)
 {
   if (argc != 1)
   {
-    std::cerr << "Usage: ./petmpc\n";
+    std::cerr << "Uso: ./petmpc\n";
     return EXIT_FAILURE;
   }
 
   MSession session;
   if (session.init(argv) != 0)
   {
-    std::cerr << "Error during initialization..\n";
+    std::cerr << "Erro na inicialização..\n";
   }
 
   int opt = 99;
@@ -41,7 +42,31 @@ int main(int argc, char **argv)
     case 3:
       std::cout << "Qual será o critério de busca? \n";
       std::cout << "";
+      // TODO
       break;
+    case 4:
+    {
+      int id;
+      std::cout << "Insira o Id da música: ";
+      std::cin >> id;
+      session.add_to_queue((u8)id);
+      break;
+    }
+    case 5:
+    {
+      session.sort_queue();
+      break;
+    }
+    case 6:
+    {
+      session.play();
+      break;
+    }
+    case 7:
+    {
+      session.clear_queue();
+      break;
+    }
 
     default:
       std::cout << "Opção inválida, tente novamente.\n";
@@ -49,11 +74,6 @@ int main(int argc, char **argv)
     }
     // TODO: lógica
   }
-
-  // auto p = std::make_unique<MPlayer>();
-  // auto m = session.find_music_on_database(5)->get_path();
-  // p->music(m.c_str());
-  // p->play();
 
   return EXIT_SUCCESS;
 }
