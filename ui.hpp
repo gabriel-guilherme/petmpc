@@ -35,7 +35,7 @@ void init(char **filename)
   std::vector<std::string> queue_titles;
   std::for_each(session.get_database().begin(), session.get_database().end(),
                 [&lib_titles](std::shared_ptr<Music> ptr)
-                { lib_titles.push_back(ptr->get_title()); });
+                { lib_titles.push_back(ptr->title); });
 
   auto lib = Menu(&lib_titles, &lib_entry);
   lib |= CatchEvent(
@@ -45,15 +45,13 @@ void init(char **filename)
         {
           const auto library = session.get_database();
           auto title = lib_titles.at(lib_entry);
-          auto selected_it =
-              std::find_if(library.begin(), library.end(),
-                           [&title](std::shared_ptr<Music> ptr)
-                           { return ptr->get_title() == title; });
+          auto selected_it = std::find_if(library.begin(), library.end(),
+                                          [&title](std::shared_ptr<Music> ptr)
+                                          { return ptr->title == title; });
 
           auto selected = *selected_it;
           session.add_to_queue(selected);
-          result = std::format("'{}' adicionada com sucesso à fila\n",
-                               selected->get_title());
+          result = std::format("'{}' adicionada à fila\n", selected->title);
           return true;
         }
         else if (event == Event::Character('s'))
@@ -80,7 +78,7 @@ void init(char **filename)
         {
           if (auto m = weak_ptr.lock())
           {
-            queue_titles.push_back(m->get_title());
+            queue_titles.push_back(m->title);
           }
         }
         queue_container->DetachAllChildren();
@@ -98,11 +96,12 @@ void init(char **filename)
                     auto music = session.get_queue().at(queue_entry);
                     if (auto m = music.lock())
                     {
-                      std::string title = m->get_title();
+                      std::string title = m->title;
                       result = std::format(
-                          "Tocando a fila\n"); // se queremos ser simplistas não
-                                               // podemos usar mutex e nada mais
-                                               // de s.o ...
+                          "Reproduzindo a fila\n"); // se queremos ser
+                                                    // simplistas não podemos
+                                                    // usar mutex e nada mais de
+                                                    // s.o ...
                       static std::future<void>
                           play_thread; // estritamente necessário pq não
                                        // queremos travar a UI..

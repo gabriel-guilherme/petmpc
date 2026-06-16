@@ -92,7 +92,7 @@ void MSession::add_to_queue(u8 id)
 
   for (auto it = m_database->begin(); it != m_database->end(); it++)
   {
-    if (it->get()->get_id() == id)
+    if (it->get()->id == id)
     {
       music = *it;
     }
@@ -123,7 +123,7 @@ void MSession::sort_queue()
                   auto m1 = pt1.lock();
                   auto m2 = pt2.lock();
                   if (m1 && m2)
-                    return m1->get_title() < m2->get_title() ? true : false;
+                    return m1->title < m2->title ? true : false;
 
                   return m1 != nullptr;
                 });
@@ -174,7 +174,7 @@ bool MSession::play(const std::string &title)
                          {
                            if (auto m = ptr.lock())
                            {
-                             if (m->get_title() == title)
+                             if (m->title == title)
                                return true;
                            }
                            return false;
