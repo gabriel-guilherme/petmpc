@@ -2,6 +2,7 @@
 #include "mplayer.hpp"
 #include "music.hpp"
 #include "utils.h"
+#include <format>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -34,7 +35,24 @@ public:
   void display_songs();
   void display_queue();
   void add_to_queue(u8);
+  void add_to_queue(const std::shared_ptr<Music>);
   void clear_queue();
   void play();
+  bool play(const std::string &);
   void sort_queue();
+
+  const std::string get_queue_size_msg()
+  {
+    return m_queue->size() == 0
+               ? "Fila vazia."
+               : std::format("Tamanho da fila: {}", m_queue->size());
+  }
+  const std::unordered_set<std::shared_ptr<Music>> &get_database() const
+  {
+    return *m_database;
+  };
+  const std::vector<std::weak_ptr<Music>> &get_queue() const
+  {
+    return *m_queue;
+  }
 };

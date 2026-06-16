@@ -9,7 +9,7 @@
 
 u8 MSession::init(char **argv)
 {
-  clrscr();
+  // clrscr();
   std::string line, path = ASSETS_STR + "database.csv";
   m_database = std::make_unique<std::unordered_set<std::shared_ptr<Music>>>();
   m_queue = std::make_unique<std::vector<std::weak_ptr<Music>>>();
@@ -52,7 +52,9 @@ u8 MSession::init(char **argv)
   m_options.insert({7, "Limpar fila"});
   m_options.insert({9, "Estatísticas"});
 
-  std::cout << "[PETMPC]\n";
+  // TODO: mandar pra UI
+  // std::cout << "[PETMPC]\n";
+  // ui::init(*m_database, *m_queue, m_current);
 
   return 0;
 }
@@ -100,6 +102,11 @@ void MSession::add_to_queue(u8 id)
     m_queue->emplace_back(music);
   else
     std::cout << "Música não encontrada. \n";
+}
+
+void MSession::add_to_queue(const std::shared_ptr<Music> ptr)
+{
+  m_queue->emplace_back(ptr);
 }
 
 void MSession::clear_queue()
@@ -152,6 +159,45 @@ void MSession::play()
   std::future<bool> result =
       std::async(std::launch::async, &MSession::play_loop,
                  this); // ver alguma forma de liberar a UI pro user
+}
+
+bool MSession::play(const std::string &title)
+{
+  if (m_queue->empty())
+  {
+    // TODO: erro
+  }
+
+  auto duplicate = *m_queue;
+  auto it = std::find_if(duplicate.begin(), duplicate.end(),
+                         [&](std::weak_ptr<Music> ptr)
+                         {
+                           if (auto m = ptr.lock())
+                           {
+                             if (m->get_title() == title)
+                               return true;
+                           }
+                           return false;
+                         });
+
+  if (it == duplicate.end())
+  {
+    return false;
+  }
+
+  while (it != duplicate.end())
+  {
+    if (auto m = it->lock())
+    {
+      m_player->music(m->get_path().c_str());
+      m_player->play();
+      m_queue->erase(m_queue->begin());
+    }
+
+    it++;
+  }
+
+  return true;
 }
 
 bool MSession::play_loop()

@@ -1,5 +1,8 @@
 #include "mplayer.hpp"
 #include "msession.hpp"
+#include "ui.hpp"
+#include <ftxui/dom/elements.hpp>
+#include <ftxui/screen/screen.hpp>
 #include <iostream>
 
 int main(int argc, char **argv)
@@ -10,12 +13,15 @@ int main(int argc, char **argv)
     return EXIT_FAILURE;
   }
 
-  MSession session;
-  if (session.init(argv) != 0)
-  {
-    std::cerr << "Erro na inicialização..\n";
-  }
+  ui::init(argv);
 
+  // MSession session;
+  // if (session.init(argv) != 0)
+  // {
+  //   std::cerr << "Erro na inicialização..\n";
+  // }
+
+  /*
   int opt = 99;
   session.display_songs();
   while (true)
@@ -74,6 +80,7 @@ int main(int argc, char **argv)
     }
     // TODO: lógica
   }
+  */
 
   return EXIT_SUCCESS;
 }
