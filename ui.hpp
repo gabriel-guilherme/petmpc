@@ -91,6 +91,13 @@ void init(char **filename)
               {
                 if (event == Event::Return && !queue_titles.empty())
                 {
+                  if (!session.is_paused())
+                  {
+                    result =
+                        "Pause o player antes de escolher uma nova música.";
+                    return true;
+                  }
+
                   if (queue_entry < session.get_queue().size())
                   {
                     auto music = session.get_queue().at(queue_entry);
@@ -146,6 +153,25 @@ void init(char **filename)
         {
           screen.Exit();
           return true;
+        }
+        else if (event == Event::p)
+        {
+          if (session.get_queue().empty())
+            result = "Não há nada tocando.";
+          else
+          {
+            session.toggle_paused();
+            if (session.is_paused())
+            {
+              result = "Reprodução pausada.";
+            }
+            else
+            {
+              auto current = session.get_current().lock();
+              if (current)
+                result = std::format("Voltando a tocar {}", current->title);
+            }
+          }
         }
         return false;
       });

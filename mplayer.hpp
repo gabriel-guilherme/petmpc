@@ -2,6 +2,7 @@
 
 #include "utils.h"
 #include <ao/ao.h>
+#include <atomic>
 #include <memory>
 #include <mpg123.h>
 #include <string>
@@ -26,5 +27,6 @@ public:
   MPlayer();
   ~MPlayer();
   void music(const char *);
-  void play();
+  void reset();
+  void play(const std::atomic<bool> &);
 };
