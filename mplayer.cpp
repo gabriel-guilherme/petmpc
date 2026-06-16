@@ -30,9 +30,6 @@ void MPlayer::music(const char *mp3)
 
 void MPlayer::play()
 {
-  std::cout << "\033[33;1m\u25B6 Playing the song: \033[35;1m ";
-  std::cout << track << "\033[m\n";
-
   while (mpg123_read(mh, buffer.get(), buffer_size, &done) == MPG123_OK)
   {
     ao_play(dev, buffer.get(), done);
