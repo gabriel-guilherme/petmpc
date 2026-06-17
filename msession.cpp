@@ -56,15 +56,13 @@ void MSession::add_to_queue(u8 id)
   std::weak_ptr<Music> music;
 
   for (auto it = m_database->begin(); it != m_database->end(); it++)
-  {
     if (it->get()->id == id)
-    {
       music = *it;
-    }
-  }
 
   if (music.lock())
+  {
     m_queue->emplace_back(music);
+  }
   else
     std::cout << "Música não encontrada. \n";
 }
@@ -94,35 +92,12 @@ void MSession::sort_queue()
                 });
 }
 
-// TODO: excluir isso em algum commit
-void MSession::play()
-{
-  if (m_queue->empty())
-  {
-    std::cout
-        << "Fila de reprodução vazia, adicione ao menos 1 música antes.\n";
-    return;
-  }
-
-  std::future<bool> result =
-      std::async(std::launch::async, &MSession::play_loop,
-                 this); // ver alguma forma de liberar a UI pro user
-}
-
 bool MSession::play(const std::string &title)
 {
   if (m_queue->empty())
   {
     // TODO: erro
   }
-  if (auto m = m_current.lock())
-    if (title != m->title)
-    {
-      // TODO; ta bem cagado ainda
-      m_player.reset();
-      m_player = std::make_unique<MPlayer>();
-    }
-  // m_player->reset();
 
   auto duplicate = *m_queue;
   auto it = std::find_if(duplicate.begin(), duplicate.end(),
@@ -141,37 +116,20 @@ bool MSession::play(const std::string &title)
     return false;
   }
 
-  paused = false;
+  paused.store(false);
+  stop.store(false);
   while (it != duplicate.end())
   {
     if (auto m = it->lock())
     {
       m_current = m;
       m_player->music(m->get_path().c_str());
-      m_player->play(paused);
+      m_player->play(paused, stop);
       m_queue->erase(m_queue->begin());
     }
 
     it++;
   }
-
-  return true;
-}
-
-bool MSession::play_loop()
-{
-  // auto duplicate = *m_queue;
-
-  // for (auto it = duplicate.begin(); it != duplicate.end(); it++)
-  // {
-  //   m_current = *it;
-  //   if (auto value = m_current.lock())
-  //   {
-  //     m_player->music(value->get_path().c_str());
-  //     m_player->play();
-  //     m_queue->erase(m_queue->begin());
-  //   }
-  // }
 
   return true;
 }

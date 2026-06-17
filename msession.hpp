@@ -5,7 +5,6 @@
 #include <atomic>
 #include <format>
 #include <iostream>
-#include <map>
 #include <memory>
 #include <unordered_set>
 #include <vector>
@@ -20,11 +19,7 @@ class MSession
   const std::string ASSETS_STR = "assets/";
   u16 m_last_id = 0;
   std::atomic<bool> paused{true};
-
-  bool play_loop();
-
-protected:
-  void clrscr() { std::cout << "\033[2J\033[1;1H"; }
+  std::atomic<bool> stop{false};
 
 public:
   MSession() : m_database(nullptr), m_queue(nullptr) {};
@@ -33,7 +28,6 @@ public:
   void add_to_queue(u8);
   void add_to_queue(const std::shared_ptr<Music>);
   void clear_queue();
-  void play();
   bool play(const std::string &);
   void sort_queue();
   bool is_paused() { return paused.load(); }
@@ -42,6 +36,7 @@ public:
     paused.store(!paused.load());
     return paused.load();
   }
+  void stop_track() { stop.store(true); }
   std::weak_ptr<Music> &get_current() { return m_current; }
 
   const std::string get_queue_size_msg()

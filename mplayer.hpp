@@ -27,6 +27,5 @@ public:
   MPlayer();
   ~MPlayer();
   void music(const char *);
-  void reset();
-  void play(const std::atomic<bool> &);
+  void play(const std::atomic<bool> &, const std::atomic<bool> &);
 };

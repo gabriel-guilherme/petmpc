@@ -19,6 +19,8 @@ MPlayer::MPlayer()
 void MPlayer::music(const char *mp3)
 {
   track = mp3;
+  // reinicializando o buffer; mas não está funcionando ainda...
+  buffer.reset(new char[buffer_size], std::default_delete<char[]>());
   mpg123_open(mh, mp3);
   mpg123_getformat(mh, &rate, &channels, &encoding);
 
@@ -30,30 +32,28 @@ void MPlayer::music(const char *mp3)
   dev = ao_open_live(driver, &format, NULL);
 }
 
-void MPlayer::play(const std::atomic<bool> &pause)
+void MPlayer::play(const std::atomic<bool> &pause,
+                   const std::atomic<bool> &stop)
 {
   while (mpg123_read(mh, buffer.get(), buffer_size, &done) == MPG123_OK)
   {
+    if (stop.load())
+      break;
+
     while (pause.load())
     {
-      std::this_thread::sleep_for(std::chrono::milliseconds(50));
+      if (stop.load())
+        break;
+      std::this_thread::sleep_for(std::chrono::milliseconds(25));
     }
     ao_play(dev, buffer.get(), done);
   }
 }
 
-void MPlayer::reset()
-{
-  ao_close(dev);
-  dev = nullptr;
-  mpg123_close(mh);
-}
-
 MPlayer::~MPlayer()
 {
-  // ao_close(dev);
-  // mpg123_close(mh);
-  reset();
+  ao_close(dev);
+  mpg123_close(mh);
   mpg123_delete(mh);
   mpg123_exit();
   ao_shutdown();

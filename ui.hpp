@@ -104,17 +104,18 @@ void init(char **filename)
                     if (auto m = music.lock())
                     {
                       std::string title = m->title;
+                      session.stop_track();
                       result = std::format(
                           "Reproduzindo a fila\n"); // se queremos ser
                                                     // simplistas não podemos
                                                     // usar mutex e nada mais de
                                                     // s.o ...
-                      static std::future<void>
-                          play_thread; // estritamente necessário pq não
-                                       // queremos travar a UI..
-                      play_thread =
-                          std::async(std::launch::async, [&session, title]()
-                                     { session.play(title); });
+                                                    // tirando isso aqui pra
+                                                    // conseguir rodar em
+                                                    // paralelo com a UI
+                      std::thread play_thread([&session, title]
+                                              { session.play(title); });
+                      play_thread.detach();
                     }
                   }
                   return true;
