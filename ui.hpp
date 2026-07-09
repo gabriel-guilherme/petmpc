@@ -174,6 +174,18 @@ void init(char **filename)
             }
           }
         }
+        else if (event == Event::r)
+        {
+          if (session.get_queue().empty())
+          {
+            result = "Adicione músicas à fila para embaralhar.";
+          }
+          else
+          {
+            session.shuffle_queue();
+            result = "Fila embaralhada.";
+          }
+        }
         return false;
       });
 

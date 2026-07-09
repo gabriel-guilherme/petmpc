@@ -30,6 +30,7 @@ public:
   void clear_queue();
   bool play(const std::string &);
   void sort_queue();
+  void shuffle_queue();
   bool is_paused() { return paused.load(); }
   bool toggle_paused()
   {

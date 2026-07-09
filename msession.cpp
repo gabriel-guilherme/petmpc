@@ -1,10 +1,12 @@
 #include "msession.hpp"
 #include "sortingLib/sorting.hpp"
 #include "string"
+#include <algorithm>
 #include <format>
 #include <fstream>
 #include <future>
 #include <memory>
+#include <random>
 #include <sstream>
 
 u8 MSession::init(char **argv)
@@ -90,6 +92,12 @@ void MSession::sort_queue()
 
                   return m1 != nullptr;
                 });
+}
+
+void MSession::shuffle_queue()
+{
+  auto rng = std::default_random_engine {};
+  std::shuffle(std::begin(*m_queue) + 1, std::end(*m_queue), rng);
 }
 
 bool MSession::play(const std::string &title)
