@@ -1,21 +1,27 @@
 #pragma once
 #include "utils.h"
+#include <format>
 #include <string>
 
-class Music
+struct Music
 {
-  u16 id;
   std::string title;
   std::string genre;
+  u16 id;
   float duration;
   u16 year;
-
-public:
-  Music(u16, std::string &&, std::string &&, float, u16);
+  Music(u16 i, std::string &&t, std::string &&g, float d, u16 y)
+      : id(i), title(t), genre(g), duration(d), year(y)
+  {
+  }
   virtual ~Music() = default;
 
-  const std::string to_string();
-  const std::string get_path() const;
-  const u16 get_id() { return id; };
-  const std::string get_title() { return title; }
+  const std::string to_string()
+  {
+    return std::format("({}) {} - {} [{}]\n", id, title, year, duration);
+  };
+  const std::string get_path() const
+  {
+    return std::string("assets/" + this->title + ".mp3");
+  };
 };

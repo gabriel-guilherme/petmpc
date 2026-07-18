@@ -1,5 +1,7 @@
 #include "mplayer.hpp"
+#include <chrono>
 #include <iostream>
+#include <thread>
 
 MPlayer::MPlayer()
 {
@@ -14,9 +16,26 @@ MPlayer::MPlayer()
                                  std::default_delete<char[]>());
 }
 
+void MPlayer::reset()
+{
+  if (dev)
+  {
+    ao_close(dev);
+    dev = nullptr;
+  }
+  if (mh != nullptr)
+    mpg123_close(mh);
+
+  mh = mpg123_new(NULL, &err);
+  buffer_size = mpg123_outblock(mh);
+  buffer = std::shared_ptr<char>(new char[buffer_size],
+                                 std::default_delete<char[]>());
+}
+
 void MPlayer::music(const char *mp3)
 {
   track = mp3;
+  this->reset();
   mpg123_open(mh, mp3);
   mpg123_getformat(mh, &rate, &channels, &encoding);
 
@@ -28,13 +47,20 @@ void MPlayer::music(const char *mp3)
   dev = ao_open_live(driver, &format, NULL);
 }
 
-void MPlayer::play()
+void MPlayer::play(const std::atomic<bool> &pause,
+                   const std::atomic<bool> &stop)
 {
-  std::cout << "\033[33;1m\u25B6 Playing the song: \033[35;1m ";
-  std::cout << track << "\033[m\n";
-
   while (mpg123_read(mh, buffer.get(), buffer_size, &done) == MPG123_OK)
   {
+    if (stop.load())
+      break;
+
+    while (pause.load())
+    {
+      if (stop.load())
+        break;
+      std::this_thread::sleep_for(std::chrono::milliseconds(25));
+    }
     ao_play(dev, buffer.get(), done);
   }
 }

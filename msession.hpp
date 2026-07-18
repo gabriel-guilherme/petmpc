@@ -2,39 +2,45 @@
 #include "mplayer.hpp"
 #include "music.hpp"
 #include "utils.h"
+#include <atomic>
+#include <format>
 #include <iostream>
-#include <map>
 #include <memory>
+#include <thread>
 #include <unordered_set>
 #include <vector>
 
 class MSession
 {
+private:
   std::unique_ptr<std::unordered_set<std::shared_ptr<Music>>> m_database;
   std::unique_ptr<std::vector<std::weak_ptr<Music>>> m_queue;
   std::weak_ptr<Music> m_current;
   std::unique_ptr<MPlayer> m_player;
+  std::thread m_play_thread;
 
   const std::string ASSETS_STR = "assets/";
   u16 m_last_id = 0;
-  // bool is_playing = false;
+  std::atomic<bool> paused{true};
+  std::atomic<bool> stop{false};
 
-  std::map<u8, std::string> m_options;
-
-  bool play_loop();
-
-protected:
-  void clrscr() { std::cout << "\033[2J\033[1;1H"; }
+  bool play(const std::string &);
 
 public:
   MSession() : m_database(nullptr), m_queue(nullptr) {};
+  ~MSession();
   u8 init(char **argv);
-  void end();
-  void menu();
-  void display_songs();
-  void display_queue();
   void add_to_queue(u8);
+  void add_to_queue(const std::shared_ptr<Music>);
   void clear_queue();
-  void play();
+  void async_play(const std::string &);
   void sort_queue();
+  void shuffle_queue();
+  bool is_paused();
+  bool toggle_paused();
+  void stop_track();
+  std::weak_ptr<Music> &get_current();
+  const std::string get_queue_size_msg();
+  const std::unordered_set<std::shared_ptr<Music>> &get_database() const;
+  const std::vector<std::weak_ptr<Music>> &get_queue() const;
 };
