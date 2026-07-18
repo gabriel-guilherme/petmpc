@@ -1,15 +1,16 @@
 #include "msession.hpp"
 #include "sortingLib/sorting.hpp"
 #include "string"
+#include <algorithm>
 #include <format>
 #include <fstream>
 #include <future>
 #include <memory>
+#include <random>
 #include <sstream>
 
 u8 MSession::init(char **argv)
 {
-  clrscr();
   std::string line, path = ASSETS_STR + "database.csv";
   m_database = std::make_unique<std::unordered_set<std::shared_ptr<Music>>>();
   m_queue = std::make_unique<std::vector<std::weak_ptr<Music>>>();
@@ -42,39 +43,7 @@ u8 MSession::init(char **argv)
     }
   }
 
-  m_options.insert({0, "Sair"});
-  m_options.insert({1, "Exibir biblioteca"});
-  m_options.insert({2, "Exibir fila"});
-  m_options.insert({3, "Buscar música na biblioteca"});
-  m_options.insert({4, "Adicionar música à fila"});
-  m_options.insert({5, "Ordenar fila"});
-  m_options.insert({6, "Reproduzir"});
-  m_options.insert({7, "Limpar fila"});
-  m_options.insert({9, "Estatísticas"});
-
-  std::cout << "[PETMPC]\n";
-
   return 0;
-}
-
-void MSession::display_songs()
-{
-  std::cout << "== BIBLIOTECA == \n";
-  for (auto music : *m_database)
-  {
-    std::cout << music.get()->to_string();
-  }
-  std::cout << "== \n";
-}
-
-void MSession::menu()
-{
-  std::cout << "== MENU ==\n";
-  std::cout << "Selecione uma das opções.\n";
-  for (auto o : m_options)
-  {
-    std::cout << std::format("[{}] {}\n", o.first, o.second);
-  }
 }
 
 void MSession::end()
@@ -89,17 +58,20 @@ void MSession::add_to_queue(u8 id)
   std::weak_ptr<Music> music;
 
   for (auto it = m_database->begin(); it != m_database->end(); it++)
-  {
-    if (it->get()->get_id() == id)
-    {
+    if (it->get()->id == id)
       music = *it;
-    }
-  }
 
   if (music.lock())
+  {
     m_queue->emplace_back(music);
+  }
   else
     std::cout << "Música não encontrada. \n";
+}
+
+void MSession::add_to_queue(const std::shared_ptr<Music> ptr)
+{
+  m_queue->emplace_back(ptr);
 }
 
 void MSession::clear_queue()
@@ -116,57 +88,58 @@ void MSession::sort_queue()
                   auto m1 = pt1.lock();
                   auto m2 = pt2.lock();
                   if (m1 && m2)
-                    return m1->get_title() < m2->get_title() ? true : false;
+                    return m1->title < m2->title ? true : false;
 
                   return m1 != nullptr;
                 });
 }
 
-void MSession::display_queue()
+void MSession::shuffle_queue()
 {
-  if (m_queue->empty())
-  {
-    std::cout << "Fila de reprodução vazia.\n";
-    return;
-  }
-
-  std::cout << "== FILA DE REPRODUÇÃO ==\n";
-  for (auto q : *m_queue)
-  {
-    if (auto m = q.lock())
-    {
-      std::cout << m->to_string() << "\n";
-    }
-  }
+  auto rng = std::default_random_engine {};
+  std::shuffle(std::begin(*m_queue) + 1, std::end(*m_queue), rng);
 }
 
-void MSession::play()
+bool MSession::play(const std::string &title)
 {
+  paused.store(true);
+  stop.store(true);
+  // m_player = std::make_unique<MPlayer>();
   if (m_queue->empty())
   {
-    std::cout
-        << "Fila de reprodução vazia, adicione ao menos 1 música antes.\n";
-    return;
+    // TODO: erro
   }
 
-  std::future<bool> result =
-      std::async(std::launch::async, &MSession::play_loop,
-                 this); // ver alguma forma de liberar a UI pro user
-}
-
-bool MSession::play_loop()
-{
   auto duplicate = *m_queue;
+  auto it = std::find_if(duplicate.begin(), duplicate.end(),
+                         [&](std::weak_ptr<Music> ptr)
+                         {
+                           if (auto m = ptr.lock())
+                           {
+                             if (m->title == title)
+                               return true;
+                           }
+                           return false;
+                         });
 
-  for (auto it = duplicate.begin(); it != duplicate.end(); it++)
+  if (it == duplicate.end())
   {
-    m_current = *it;
-    if (auto value = m_current.lock())
+    return false;
+  }
+
+  paused.store(false);
+  stop.store(false);
+  while (it != duplicate.end())
+  {
+    if (auto m = it->lock())
     {
-      m_player->music(value->get_path().c_str());
-      m_player->play();
+      m_current = m;
+      m_player->music(m->get_path().c_str());
+      m_player->play(paused, stop);
       m_queue->erase(m_queue->begin());
     }
+
+    it++;
   }
 
   return true;
