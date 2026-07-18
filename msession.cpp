@@ -102,6 +102,9 @@ void MSession::shuffle_queue()
 
 bool MSession::play(const std::string &title)
 {
+  paused.store(true);
+  stop.store(true);
+  // m_player = std::make_unique<MPlayer>();
   if (m_queue->empty())
   {
     // TODO: erro
