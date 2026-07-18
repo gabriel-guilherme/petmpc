@@ -69,66 +69,51 @@ void init(char **filename)
 
   auto queue_container = Container::Tab({}, &queue_entry);
 
-  auto queue_renderer = Renderer(
-      queue_container,
-      [&]
-      {
-        queue_titles.clear();
-        for (auto const &weak_ptr : session.get_queue())
-        {
-          if (auto m = weak_ptr.lock())
-          {
-            queue_titles.push_back(m->title);
-          }
-        }
-        queue_container->DetachAllChildren();
-        if (!queue_titles.empty())
-        {
-          auto queue_menu = Menu(&queue_titles, &queue_entry);
+  auto queue_renderer =
+      Renderer(queue_container,
+               [&]
+               {
+                 queue_titles.clear();
+                 for (auto const &weak_ptr : session.get_queue())
+                 {
+                   if (auto m = weak_ptr.lock())
+                   {
+                     queue_titles.push_back(m->title);
+                   }
+                 }
+                 queue_container->DetachAllChildren();
+                 if (!queue_titles.empty())
+                 {
+                   auto queue_menu = Menu(&queue_titles, &queue_entry);
 
-          queue_menu |= CatchEvent(
-              [&](Event event)
-              {
-                if (event == Event::Return && !queue_titles.empty())
-                {
-                  if (!session.is_paused())
-                  {
-                    result =
-                        "Pause o player antes de escolher uma nova música.";
-                    return true;
-                  }
+                   queue_menu |= CatchEvent(
+                       [&](Event event)
+                       {
+                         if (event == Event::Return && !queue_titles.empty())
+                         {
+                           if (queue_entry < session.get_queue().size())
+                           {
+                             auto music = session.get_queue().at(queue_entry);
+                             if (auto m = music.lock())
+                             {
+                               std::string title = m->title;
+                               result =
+                                   std::format("Reproduzindo: '{}'\n", title);
+                               session.async_play(title);
+                               screen.RequestAnimationFrame();
+                             }
+                           }
+                           return true;
+                         }
+                         return false;
+                       });
 
-                  if (queue_entry < session.get_queue().size())
-                  {
-                    auto music = session.get_queue().at(queue_entry);
-                    if (auto m = music.lock())
-                    {
-                      std::string title = m->title;
-                      session.stop_track();
-                      result = std::format(
-                          "Reproduzindo a fila\n"); // se queremos ser
-                                                    // simplistas não podemos
-                                                    // usar mutex e nada mais de
-                                                    // s.o ...
-                                                    // tirando isso aqui pra
-                                                    // conseguir rodar em
-                                                    // paralelo com a UI
-                      std::thread play_thread([&session, title]
-                                              { session.play(title); });
-                      play_thread.detach();
-                    }
-                  }
-                  return true;
-                }
-                return false;
-              });
+                   queue_container->Add(queue_menu);
+                 }
 
-          queue_container->Add(queue_menu);
-        }
-
-        return vbox({text(session.get_queue_size_msg()), separator(),
-                     queue_container->Render()});
-      });
+                 return vbox({text(session.get_queue_size_msg()), separator(),
+                              queue_container->Render()});
+               });
 
   auto tab_container = Container::Tab({lib, queue_renderer}, &selected_tab);
 

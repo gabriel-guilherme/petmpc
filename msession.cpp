@@ -9,6 +9,8 @@
 #include <random>
 #include <sstream>
 
+MSession::~MSession() {}
+
 u8 MSession::init(char **argv)
 {
   std::string line, path = ASSETS_STR + "database.csv";
@@ -44,13 +46,6 @@ u8 MSession::init(char **argv)
   }
 
   return 0;
-}
-
-void MSession::end()
-{
-  std::cout << "Fechando aplicação..\n";
-
-  // TODO: deletar recursos
 }
 
 void MSession::add_to_queue(u8 id)
@@ -96,18 +91,25 @@ void MSession::sort_queue()
 
 void MSession::shuffle_queue()
 {
-  auto rng = std::default_random_engine {};
-  std::shuffle(std::begin(*m_queue) + 1, std::end(*m_queue), rng);
+  auto rng = std::default_random_engine{};
+  std::shuffle(std::begin(*m_queue), std::end(*m_queue), rng);
+}
+
+void MSession::async_play(const std::string &title)
+{
+  stop.store(true);
+  if (m_play_thread.joinable())
+    m_play_thread.join();
+
+  stop.store(false);
+  m_play_thread = std::thread([this, title] { this->play(title); });
 }
 
 bool MSession::play(const std::string &title)
 {
-  paused.store(true);
-  stop.store(true);
-  // m_player = std::make_unique<MPlayer>();
   if (m_queue->empty())
   {
-    // TODO: erro
+    return false;
   }
 
   auto duplicate = *m_queue;
@@ -131,16 +133,45 @@ bool MSession::play(const std::string &title)
   stop.store(false);
   while (it != duplicate.end())
   {
+    if (stop.load())
+      break;
     if (auto m = it->lock())
     {
       m_current = m;
       m_player->music(m->get_path().c_str());
       m_player->play(paused, stop);
-      m_queue->erase(m_queue->begin());
     }
 
     it++;
   }
 
   return true;
+}
+
+bool MSession::is_paused() { return paused.load(); }
+
+bool MSession::toggle_paused()
+{
+  paused.store(!paused.load());
+  return paused.load();
+}
+
+void MSession::stop_track() { stop.store(true); }
+
+std::weak_ptr<Music> &MSession::get_current() { return m_current; }
+
+const std::string MSession::get_queue_size_msg()
+{
+  return m_queue->size() == 0
+             ? "Fila vazia."
+             : std::format("Tamanho da fila: {}", m_queue->size());
+}
+const std::unordered_set<std::shared_ptr<Music>> &MSession::get_database() const
+{
+  return *m_database;
+};
+
+const std::vector<std::weak_ptr<Music>> &MSession::get_queue() const
+{
+  return *m_queue;
 }

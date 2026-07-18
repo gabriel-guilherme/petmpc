@@ -50,8 +50,6 @@ void MPlayer::music(const char *mp3)
 void MPlayer::play(const std::atomic<bool> &pause,
                    const std::atomic<bool> &stop)
 {
-  // std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-  // this->debug();
   while (mpg123_read(mh, buffer.get(), buffer_size, &done) == MPG123_OK)
   {
     if (stop.load())
