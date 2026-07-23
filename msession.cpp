@@ -9,7 +9,17 @@
 #include <random>
 #include <sstream>
 
-MSession::~MSession() {}
+bool cmp_lib_by_title(const std::shared_ptr<Music> &,
+                      const std::shared_ptr<Music> &);
+
+bool cmp_lib_by_duration(const std::shared_ptr<Music> &,
+                         const std::shared_ptr<Music> &);
+
+bool cmp_queue_by_title(const std::weak_ptr<Music> &,
+                        const std::weak_ptr<Music> &);
+
+bool cmp_queue_by_duration(const std::weak_ptr<Music> &,
+                           const std::weak_ptr<Music> &);
 
 u8 MSession::init(char **argv)
 {
@@ -75,18 +85,33 @@ void MSession::clear_queue()
   m_current.reset();
 }
 
-void MSession::sort_queue()
+void MSession::sort_queue(sort_criteria crit)
 {
-  sa::insertion(m_queue->data(), m_queue->data() + m_queue->size(),
-                [](std::weak_ptr<Music> &pt1, std::weak_ptr<Music> &pt2)
-                {
-                  auto m1 = pt1.lock();
-                  auto m2 = pt2.lock();
-                  if (m1 && m2)
-                    return m1->title < m2->title ? true : false;
+  if (crit == sort_criteria::TITLE)
+  {
+    sa::insertion_sort(m_queue->data(), m_queue->data() + m_queue->size(),
+                       cmp_queue_by_title);
+  }
+  else if (crit == sort_criteria::DURATION)
+  {
+    sa::insertion_sort(m_queue->data(), m_queue->data() + m_queue->size(),
+                       cmp_queue_by_duration);
+  }
+}
 
-                  return m1 != nullptr;
-                });
+std::vector<std::shared_ptr<Music>> MSession::sort_library(sort_criteria crit)
+{
+  std::vector<std::shared_ptr<Music>> vec(m_database->begin(),
+                                          m_database->end());
+
+  if (crit == sort_criteria::TITLE)
+    sa::insertion_sort(vec.data(), vec.data() + vec.size(), cmp_lib_by_title);
+
+  else if (crit == sort_criteria::DURATION)
+    sa::insertion_sort(vec.data(), vec.data() + vec.size(),
+                       cmp_lib_by_duration);
+
+  return vec;
 }
 
 void MSession::shuffle_queue()
@@ -112,6 +137,8 @@ bool MSession::play(const std::string &title)
     return false;
   }
 
+  // TODO: trocar função lambda bem como fazer com que sort de queue reflita na
+  // reprodução atual.
   auto duplicate = *m_queue;
   auto it = std::find_if(duplicate.begin(), duplicate.end(),
                          [&](std::weak_ptr<Music> ptr)
@@ -174,4 +201,40 @@ const std::unordered_set<std::shared_ptr<Music>> &MSession::get_database() const
 const std::vector<std::weak_ptr<Music>> &MSession::get_queue() const
 {
   return *m_queue;
+}
+
+bool cmp_lib_by_title(const std::shared_ptr<Music> &m1,
+                      const std::shared_ptr<Music> &m2)
+{
+  if (!m1 || !m2)
+    return m1 != nullptr;
+  return m1->title < m2->title;
+}
+
+bool cmp_lib_by_duration(const std::shared_ptr<Music> &m1,
+                         const std::shared_ptr<Music> &m2)
+{
+  if (!m1 || !m2)
+    return m1 != nullptr;
+  return m1->duration < m2->duration;
+}
+
+bool cmp_queue_by_title(const std::weak_ptr<Music> &m1,
+                        const std::weak_ptr<Music> &m2)
+{
+  auto l1 = m1.lock();
+  auto l2 = m2.lock();
+  if (l1 && l2)
+    return l1->title < l2->title;
+  return l1 != nullptr;
+}
+
+bool cmp_queue_by_duration(const std::weak_ptr<Music> &m1,
+                           const std::weak_ptr<Music> &m2)
+{
+  auto l1 = m1.lock();
+  auto l2 = m2.lock();
+  if (l1 && l2)
+    return l1->duration < l2->duration;
+  return l1 != nullptr;
 }

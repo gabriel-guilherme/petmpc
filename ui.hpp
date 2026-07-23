@@ -35,7 +35,13 @@ void init(char **filename)
   std::vector<std::string> queue_titles;
   std::for_each(session.get_database().begin(), session.get_database().end(),
                 [&lib_titles](std::shared_ptr<Music> ptr)
-                { lib_titles.push_back(ptr->title); });
+                {
+                  // TODO: fix erro de segmentação causado com o evento de
+                  // Return em Lib
+                  lib_titles.push_back(std::format("{} \t\t\t ({}) \t\t\t ({})",
+                                                   ptr->title, ptr->duration,
+                                                   ptr->year));
+                });
 
   auto lib = Menu(&lib_titles, &lib_entry);
   lib |= CatchEvent(
@@ -54,11 +60,6 @@ void init(char **filename)
           result = std::format("'{}' adicionada à fila\n", selected->title);
           return true;
         }
-        else if (event == Event::Character('s'))
-        {
-          // TODO: chamar algoritmo de sort
-          return false;
-        }
         else if (event == Event::Character('p'))
         {
           // TODO: chamar algoritmo de find
@@ -66,6 +67,59 @@ void init(char **filename)
         }
         return false;
       });
+
+  bool show_sort_modal = false;
+  int selected_sort_option = 0;
+  std::vector<std::string> sort_options = {"Título", "Duração"};
+
+  auto sort_radio_box = Radiobox(&sort_options, &selected_sort_option);
+  auto ok_button = Button("Ordenar",
+                          [&]
+                          {
+                            sort_criteria crit = (selected_sort_option == 0)
+                                                     ? sort_criteria::TITLE
+                                                     : sort_criteria::DURATION;
+
+                            if (selected_tab == 0)
+                            {
+                              auto vec = session.sort_library(crit);
+                              lib_titles.clear();
+                              for (const auto &music : vec)
+                                lib_titles.push_back(music->title);
+
+                              result = "Biblioteca ordenada!";
+                            }
+                            else
+                            {
+                              session.sort_queue(crit);
+                              result = "Fila de reprodução ordenada!";
+                            }
+
+                            show_sort_modal = false;
+                          });
+
+  auto cancel_button = Button("Cancelar", [&] { show_sort_modal = false; });
+
+  auto modal_container = Container::Vertical({
+      sort_radio_box,
+      Container::Horizontal({ok_button, cancel_button}),
+  });
+
+  auto modal_renderer =
+      Renderer(modal_container,
+               [&]
+               {
+                 return vbox({
+                            text("Escolha o critério de ordenação:") | bold,
+                            separator(),
+                            sort_radio_box->Render(),
+                            separator(),
+                            hbox({ok_button->Render(), text(" "),
+                                  cancel_button->Render()}) |
+                                center,
+                        }) |
+                        border | size(WIDTH, GREATER_THAN, 35);
+               });
 
   auto queue_container = Container::Tab({}, &queue_entry);
 
@@ -122,16 +176,19 @@ void init(char **filename)
       tab_container,
   });
 
-  auto renderer = Renderer(container,
-                           [&]
-                           {
-                             return vbox({text("PETMPC") | bold | center,
-                                          tab_menu->Render(), separator(),
-                                          tab_container->Render(),
-                                          text(result) | borderDashed}) |
-                                    border;
-                           });
+  auto main_view = Renderer(container,
+                            [&]
+                            {
+                              return vbox({text("PETMPC") | bold | center,
+                                           tab_menu->Render(), separator(),
+                                           tab_container->Render(),
+                                           text(result) | borderDashed}) |
+                                     border;
+                            });
 
+  auto modal = Modal(main_view, modal_renderer, &show_sort_modal);
+
+  auto renderer = Renderer(modal, [&] { return modal->Render(); });
   renderer |= CatchEvent(
       [&](Event event)
       {
@@ -162,14 +219,18 @@ void init(char **filename)
         else if (event == Event::r)
         {
           if (session.get_queue().empty())
-          {
             result = "Adicione músicas à fila para embaralhar.";
-          }
           else
           {
             session.shuffle_queue();
             result = "Fila embaralhada.";
           }
+          return true;
+        }
+        else if (event == Event::s)
+        {
+          show_sort_modal = true;
+          return true;
         }
         return false;
       });
