@@ -1,6 +1,7 @@
 #include "window.hpp"
 
 #include <algorithm>
+#include <bits/stdc++.h>
 #include <format>
 #include <iostream>
 
@@ -29,14 +30,10 @@ bool Window::init()
 
 void Window::sync_lib(const std::vector<std::shared_ptr<Music>> &vec)
 {
-  m_lib_labels.clear();
   m_lib_titles.clear();
 
   for (const auto &music : vec)
   {
-    m_lib_labels.push_back(std::format("{} \t \t \t | [{}] \t \t \t | [{}]",
-                                       music->title, music->duration,
-                                       music->year));
     m_lib_titles.push_back(music->title);
   }
 }
@@ -71,7 +68,7 @@ ftxui::Component Window::build_library_component()
     return text(state.label);
   };
 
-  m_lib_menu = Menu(&m_lib_labels, &m_lib_entry, menu_opt);
+  m_lib_menu = Menu(&m_lib_titles, &m_lib_entry, menu_opt);
   m_lib_menu |= CatchEvent(
       [this](Event event)
       {
@@ -231,7 +228,7 @@ ftxui::Element Window::render_row(const Music &music, bool focus)
 {
   auto row = hbox({
       text(music.title) | flex,
-      text(std::to_string(music.duration)) | size(WIDTH, EQUAL, 12),
+      text(format_duration(music.duration)) | size(WIDTH, EQUAL, 12),
       text(std::to_string(music.year)) | size(WIDTH, EQUAL, 8),
   });
 

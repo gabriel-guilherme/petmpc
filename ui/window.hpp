@@ -3,6 +3,7 @@
 
 #include "../msession.hpp"
 #include "../music.hpp"
+#include "../utils.h"
 #include <ftxui/component/app.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/screen_interactive.hpp>
@@ -30,10 +31,6 @@ private:
   int m_queue_entry = 0;
   std::vector<std::string> m_tabs{"Biblioteca", "Fila de Reprodução"};
   std::vector<std::string> m_sort_modal_options{"Título", "Duração"};
-  // Usadas somente pra exibir coisas na tela
-  std::vector<std::string> m_lib_labels;
-  std::vector<std::string> m_queue_labels;
-  // Guarda de fato
   std::vector<std::string> m_lib_titles;
   std::vector<std::string> m_queue_titles;
   bool m_sort_modal_open = false;
