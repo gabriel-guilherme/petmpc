@@ -21,7 +21,7 @@ void init(char **filename)
 
   auto screen = App::TerminalOutput();
   auto session = MSession();
-  session.init(filename);
+  session.init();
 
   std::string result;
 

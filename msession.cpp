@@ -21,7 +21,7 @@ bool cmp_queue_by_title(const std::weak_ptr<Music> &,
 bool cmp_queue_by_duration(const std::weak_ptr<Music> &,
                            const std::weak_ptr<Music> &);
 
-u8 MSession::init(char **argv)
+u8 MSession::init()
 {
   std::string line, path = ASSETS_STR + "database.csv";
   m_database = std::make_unique<std::unordered_set<std::shared_ptr<Music>>>();

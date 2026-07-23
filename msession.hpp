@@ -29,7 +29,7 @@ private:
 public:
   MSession() : m_database(nullptr), m_queue(nullptr) {};
   virtual ~MSession() = default;
-  u8 init(char **argv);
+  u8 init();
   void add_to_queue(u8);
   void add_to_queue(const std::shared_ptr<Music>);
   void clear_queue();

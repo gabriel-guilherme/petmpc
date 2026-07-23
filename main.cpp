@@ -1,6 +1,6 @@
 #include "mplayer.hpp"
 #include "msession.hpp"
-#include "ui.hpp"
+#include "ui/window.hpp"
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
 #include <iostream>
@@ -13,7 +13,9 @@ int main(int argc, char **argv)
     return EXIT_FAILURE;
   }
 
-  ui::init(argv);
+  ui::Window w;
+  if (w.init())
+    w.run();
 
   return EXIT_SUCCESS;
 }
