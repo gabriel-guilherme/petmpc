@@ -21,20 +21,21 @@ private:
 
   const std::string ASSETS_STR = "assets/";
   u16 m_last_id = 0;
-  std::atomic<bool> paused{true};
-  std::atomic<bool> stop{false};
+  std::atomic<bool> m_paused{true};
+  std::atomic<bool> m_stop{false};
 
   bool play(const std::string &);
 
 public:
   MSession() : m_database(nullptr), m_queue(nullptr) {};
-  ~MSession();
-  u8 init(char **argv);
+  virtual ~MSession() = default;
+  u8 init();
   void add_to_queue(u8);
   void add_to_queue(const std::shared_ptr<Music>);
   void clear_queue();
   void async_play(const std::string &);
-  void sort_queue();
+  std::vector<std::shared_ptr<Music>> sort_library(sort_criteria);
+  void sort_queue(sort_criteria);
   void shuffle_queue();
   bool is_paused();
   bool toggle_paused();

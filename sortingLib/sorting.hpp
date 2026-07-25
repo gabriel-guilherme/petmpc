@@ -32,12 +32,15 @@ using std::pow;
 using std::string;
 using std::to_string;
 
-namespace sa { // sa = sorting algorithms
+namespace sa
+{ // sa = sorting algorithms
 /// Prints out the range to a string and returns it to the client.
-template <typename FwrdIt> std::string to_string(FwrdIt first, FwrdIt last) {
+template <typename FwrdIt> std::string to_string(FwrdIt first, FwrdIt last)
+{
   std::ostringstream oss;
   oss << "[ ";
-  while (first != last) {
+  while (first != last)
+  {
     oss << *first++ << " ";
   }
   oss << "]";
@@ -47,15 +50,18 @@ template <typename FwrdIt> std::string to_string(FwrdIt first, FwrdIt last) {
 //{{{ INSERTION SORT
 /// Implementation of the Insertion Sort algorithm.
 template <typename DataType, typename Compare>
-void insertion(DataType *first, DataType *last, Compare cmp) {
+void insertion_sort(DataType *first, DataType *last, Compare cmp)
+{
   if (first == last)
     return;
 
   DataType *i = first + 1;
-  while (i < last) {
+  while (i < last)
+  {
     DataType *j = i;
 
-    while (j > first && cmp(*j, *(j - 1))) {
+    while (j > first && cmp(*j, *(j - 1)))
+    {
       std::swap(*j, *(j - 1));
       --j;
     }
@@ -68,7 +74,8 @@ void insertion(DataType *first, DataType *last, Compare cmp) {
 //{{{ MERGE SORT
 
 template <typename DataType, typename Compare>
-void merge_array(DataType *first, DataType *mid, DataType *last, Compare cmp) {
+void merge_array(DataType *first, DataType *mid, DataType *last, Compare cmp)
+{
   size_t leftSize = std::distance(first, mid);
   size_t rightSize = std::distance(mid, last);
 
@@ -82,19 +89,25 @@ void merge_array(DataType *first, DataType *mid, DataType *last, Compare cmp) {
   auto rStart = right;
   auto rEnd = right + rightSize;
 
-  while (first != last) {
-    if (lStart == lEnd) {
+  while (first != last)
+  {
+    if (lStart == lEnd)
+    {
       std::copy(rStart, rEnd, first);
       break;
     }
-    if (rStart == rEnd) {
+    if (rStart == rEnd)
+    {
       std::copy(lStart, lEnd, first);
       break;
     }
-    if (cmp(*lStart, *rStart)) {
+    if (cmp(*lStart, *rStart))
+    {
       *first = *lStart;
       ++lStart;
-    } else {
+    }
+    else
+    {
       *first = *rStart;
       ++rStart;
     }
@@ -106,8 +119,10 @@ void merge_array(DataType *first, DataType *mid, DataType *last, Compare cmp) {
 }
 
 template <typename DataType, typename Compare>
-void merge(DataType *first, DataType *last, Compare cmp) {
-  if (last - first <= 1) {
+void merge(DataType *first, DataType *last, Compare cmp)
+{
+  if (last - first <= 1)
+  {
     return;
   }
 

@@ -11,7 +11,7 @@ struct Music
   float duration;
   u16 year;
   Music(u16 i, std::string &&t, std::string &&g, float d, u16 y)
-      : id(i), title(t), genre(g), duration(d), year(y)
+      : title(t), genre(g), id(i), duration(d), year(y)
   {
   }
   virtual ~Music() = default;

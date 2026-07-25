@@ -25,7 +25,7 @@ FetchContent_MakeAvailable(argparse)
 FetchContent_MakeAvailable(ftxui)
 
 # sources
-file(GLOB SOURCES "*.cpp")
+file(GLOB SOURCES "*.cpp" "ui/*.cpp")
 
 # release executable
 add_executable(${APP_NAME} ${SOURCES})
