@@ -33,17 +33,15 @@ void Window::sync_lib(const std::vector<std::shared_ptr<Music>> &vec)
   m_lib_titles.clear();
 
   for (const auto &music : vec)
-  {
     m_lib_titles.push_back(music->title);
-  }
 }
 
 void Window::sync_queue()
 {
   m_queue_titles.clear();
-  for (auto const &weak_ptr : m_session.get_queue())
+  for (auto const &music_ptr : m_session.get_queue())
   {
-    if (auto m = weak_ptr.lock())
+    if (auto m = music_ptr.lock())
       m_queue_titles.push_back(m->title);
   }
 }
@@ -107,47 +105,84 @@ ftxui::Component Window::build_library_component()
 
 ftxui::Component Window::build_queue_component()
 {
+  MenuOption menu_opt;
+  menu_opt.entries_option.transform = [this](EntryState state)
+  {
+    if (state.index < m_queue_titles.size())
+    {
+      const auto &t = m_queue_titles.at(state.index);
+      // TODO: trocar quando houver o método de buscar diretamente na session
+      // pois é bem ineficiente ficar fazendo isso aqui.
+      auto it = std::find_if(m_session.get_queue().begin(),
+                             m_session.get_queue().end(),
+                             [&t](std::weak_ptr<Music> ptr)
+                             {
+                               if (auto m = ptr.lock())
+                                 return m->title == t;
+                               return false;
+                             });
+
+      if (auto item = (*it).lock())
+        return render_row(*item, state.focused);
+      else
+        return hbox();
+    }
+    return text(state.label);
+  };
+
   auto queue_container = Container::Tab({}, &m_queue_entry);
 
-  auto queue_renderer =
-      Renderer(queue_container,
-               [this, queue_container]
-               {
-                 sync_queue();
-                 queue_container->DetachAllChildren();
+  return Renderer(
+      queue_container,
+      [this, queue_container, menu_opt]
+      {
+        sync_queue();
+        queue_container->DetachAllChildren();
 
-                 if (!m_queue_titles.empty())
-                 {
-                   auto queue_menu = Menu(&m_queue_titles, &m_queue_entry);
-                   queue_menu |= CatchEvent(
-                       [this](Event event)
-                       {
-                         if (event == Event::Return && !m_queue_titles.empty())
-                         {
-                           if (m_queue_entry < m_session.get_queue().size())
-                           {
-                             auto music =
-                                 m_session.get_queue().at(m_queue_entry);
-                             if (auto m = music.lock())
-                             {
-                               m_status_msg =
-                                   std::format("Reproduzindo: '{}'", m->title);
-                               m_session.async_play(m->title);
-                               m_screen.RequestAnimationFrame();
-                             }
-                           }
-                           return true;
-                         }
-                         return false;
-                       });
-                   queue_container->Add(queue_menu);
-                 }
+        if (!m_queue_titles.empty())
+        {
+          auto queue_menu = Menu(&m_queue_titles, &m_queue_entry, menu_opt);
+          queue_menu |= CatchEvent(
+              [this](Event event)
+              {
+                if (event == Event::Return && !m_queue_titles.empty())
+                {
+                  if (m_queue_entry < m_session.get_queue().size())
+                  {
+                    auto music = m_session.get_queue().at(m_queue_entry);
+                    if (auto m = music.lock())
+                    {
+                      m_status_msg =
+                          std::format("Reproduzindo: '{}'", m->title);
+                      m_session.async_play(m->title);
+                      m_screen.RequestAnimationFrame();
+                    }
+                  }
+                  return true;
+                }
+                return false;
+              });
 
-                 return vbox({text(m_session.get_queue_size_msg()), separator(),
-                              queue_container->Render()});
-               });
+          auto queue_table = Renderer(
+              queue_menu,
+              [this, queue_menu]
+              {
+                return vbox(
+                    {hbox({
+                         text("Título") | bold | flex,
+                         text("Duração") | bold | size(WIDTH, EQUAL, 12),
+                         text("Ano") | bold | size(WIDTH, EQUAL, 8),
+                     }),
+                     separator(),
+                     queue_menu->Render() | vscroll_indicator | frame});
+              });
 
-  return queue_renderer;
+          queue_container->Add(queue_table);
+        }
+
+        return vbox({text(m_session.get_queue_size_msg()), separator(),
+                     queue_container->Render()});
+      });
 }
 
 ftxui::Component Window::build_sort_modal()
