@@ -122,11 +122,11 @@ void MSession::shuffle_queue()
 
 void MSession::async_play(const std::string &title)
 {
-  stop.store(true);
+  m_stop.store(true);
   if (m_play_thread.joinable())
     m_play_thread.join();
 
-  stop.store(false);
+  m_stop.store(false);
   m_play_thread = std::thread([this, title] { this->play(title); });
 }
 
@@ -156,17 +156,17 @@ bool MSession::play(const std::string &title)
     return false;
   }
 
-  paused.store(false);
-  stop.store(false);
+  m_paused.store(false);
+  m_stop.store(false);
   while (it != duplicate.end())
   {
-    if (stop.load())
+    if (m_stop.load())
       break;
     if (auto m = it->lock())
     {
       m_current = m;
       m_player->music(m->get_path().c_str());
-      m_player->play(paused, stop);
+      m_player->play(m_paused, m_stop);
     }
 
     it++;
@@ -175,15 +175,15 @@ bool MSession::play(const std::string &title)
   return true;
 }
 
-bool MSession::is_paused() { return paused.load(); }
+bool MSession::is_paused() { return m_paused.load(); }
 
 bool MSession::toggle_paused()
 {
-  paused.store(!paused.load());
-  return paused.load();
+  m_paused.store(!m_paused.load());
+  return m_paused.load();
 }
 
-void MSession::stop_track() { stop.store(true); }
+void MSession::stop_track() { m_stop.store(true); }
 
 std::weak_ptr<Music> &MSession::get_current() { return m_current; }
 

@@ -21,8 +21,8 @@ private:
 
   const std::string ASSETS_STR = "assets/";
   u16 m_last_id = 0;
-  std::atomic<bool> paused{true};
-  std::atomic<bool> stop{false};
+  std::atomic<bool> m_paused{true};
+  std::atomic<bool> m_stop{false};
 
   bool play(const std::string &);
 

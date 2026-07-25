@@ -51,7 +51,7 @@ ftxui::Component Window::build_library_component()
   MenuOption menu_opt;
   menu_opt.entries_option.transform = [this](EntryState state)
   {
-    if (state.index < m_lib_titles.size())
+    if (state.index < (int)m_lib_titles.size())
     {
       const auto &t = m_lib_titles.at(state.index);
       // TODO: trocar quando houver o método de buscar diretamente na session
@@ -108,7 +108,7 @@ ftxui::Component Window::build_queue_component()
   MenuOption menu_opt;
   menu_opt.entries_option.transform = [this](EntryState state)
   {
-    if (state.index < m_queue_titles.size())
+    if (state.index < (int)m_queue_titles.size())
     {
       const auto &t = m_queue_titles.at(state.index);
       // TODO: trocar quando houver o método de buscar diretamente na session
@@ -147,7 +147,7 @@ ftxui::Component Window::build_queue_component()
               {
                 if (event == Event::Return && !m_queue_titles.empty())
                 {
-                  if (m_queue_entry < m_session.get_queue().size())
+                  if ((size_t)m_queue_entry < m_session.get_queue().size())
                   {
                     auto music = m_session.get_queue().at(m_queue_entry);
                     if (auto m = music.lock())
