@@ -33,12 +33,12 @@ public:
   void add_to_queue(u8);
   void add_to_queue(const std::shared_ptr<Music>);
   void clear_queue();
+  void remove_from_queue(size_t);
   void async_play(const std::string &);
   std::vector<std::shared_ptr<Music>> sort_library(sort_criteria);
+  std::vector<std::shared_ptr<Music>> search_library(const std::string &);
   void sort_queue(sort_criteria);
   void shuffle_queue();
-  void save_queue();
-  std::string load_queue();
   bool is_paused();
   bool toggle_paused();
   void stop_track();
