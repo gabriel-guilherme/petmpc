@@ -21,9 +21,13 @@ bool Window::init()
   std::vector<std::shared_ptr<Music>> initial_lib(
       m_session.get_database().begin(), m_session.get_database().end());
   sync_lib(initial_lib);
-  auto modal = build_sort_modal();
+  auto sort_modal = build_sort_modal();
+  auto search_modal = build_search_modal();
   m_main_layout = construct_layout();
-  m_modal_component = Modal(m_main_layout, modal, &m_sort_modal_open);
+
+  auto with_sort_modal = Modal(m_main_layout, sort_modal, &m_sort_modal_open);
+  m_modal_component =
+      Modal(with_sort_modal, search_modal, &m_search_modal_open);
 
   return true;
 }
@@ -238,6 +242,50 @@ ftxui::Component Window::build_sort_modal()
   return modal_renderer;
 }
 
+ftxui::Component Window::build_search_modal()
+{
+  auto query_input = Input(&m_search_query, "Digite o título...");
+
+  auto search_button = Button(
+      "Buscar",
+      [this]
+      {
+        auto results = m_session.search_library(m_search_query);
+        sync_lib(results);
+        m_lib_entry = 0;
+        m_selected_tab = 0;
+        m_status_msg = std::format("{} resultado(s) para '{}'.",
+                                   results.size(), m_search_query);
+        m_search_modal_open = false;
+      });
+
+  auto cancel_button =
+      Button("Cancelar", [this] { m_search_modal_open = false; });
+
+  auto modal_container = Container::Vertical({
+      query_input,
+      Container::Horizontal({search_button, cancel_button}),
+  });
+
+  auto modal_renderer =
+      Renderer(modal_container,
+               [this, query_input, search_button, cancel_button]
+               {
+                 return vbox({
+                            text("Buscar na biblioteca:") | bold,
+                            separator(),
+                            query_input->Render() | border,
+                            separator(),
+                            hbox({search_button->Render(), text(" "),
+                                  cancel_button->Render()}) |
+                                center,
+                        }) |
+                        border | size(WIDTH, GREATER_THAN, 35);
+               });
+
+  return modal_renderer;
+}
+
 ftxui::Component Window::construct_layout()
 {
   auto tab_menu = Menu(&m_tabs, &m_selected_tab);
@@ -250,8 +298,28 @@ ftxui::Component Window::construct_layout()
       main_container,
       [this, tab_menu, tab_container]
       {
-        return vbox({text(m_program_name) | bold | center, tab_menu->Render(),
+	ftxui::Element instructions;
+	if (m_selected_tab == 0)
+        {
+            instructions = vbox({
+		text("Geral: [↑/↓] Navegar | [<-/->] Mudar de janela") | center,
+                text("Player: [q] Sair | [p] Tocar/Pausar | [s] Ordenar") | center,
+                text("Biblioteca: [/] Buscar | [Enter] Adicionar à fila") | center
+            });
+        }
+	else
+        {
+            instructions = vbox({
+                text("Geral: [↑/↓] Navegar | [<-/->] Mudar de janela") | center,
+		text("Player: [q] Sair | [p] Tocar/Pausar | [s] Ordenar | [r] Embaralhar") | center,
+                text("Fila: [c] Limpar | [d] Remover | [Ctrl+->] Avançar | [Ctrl+<-] Retroceder") | center
+            });
+        }
+
+	return vbox({text(m_program_name) | bold | center, tab_menu->Render(),
                      separator(), tab_container->Render(),
+		     separator(),
+		     instructions,
                      text(m_status_msg) | borderDashed}) |
                border;
       });
@@ -272,6 +340,8 @@ ftxui::Element Window::render_row(const Music &music, bool focus)
 
 bool Window::handle(Event event)
 {
+  if (m_search_modal_open || m_sort_modal_open)
+    return false;
   if (event == Event::q)
   {
     m_screen.Exit();
@@ -282,16 +352,28 @@ bool Window::handle(Event event)
   {
     if (m_session.get_queue().empty())
       m_status_msg = "Não há nada tocando.";
-
+	
     else
     {
-      m_session.toggle_paused();
       auto current = m_session.get_current().lock();
-      m_status_msg =
+
+      if (!current)
+      {
+        if (auto first_music = m_session.get_queue().front().lock())
+        {
+          m_session.async_play(first_music->title);
+          m_status_msg = std::format("Reproduzindo: '{}'", first_music->title);
+        }
+      }
+      else
+      {
+     	m_session.toggle_paused();
+      	m_status_msg =
           m_session.is_paused()
               ? "Pausado."
               : (current ? std::format("Reproduzindo '{}'", current->title)
                          : "Tocando...");
+      }
     }
     return true;
   }
@@ -312,26 +394,39 @@ bool Window::handle(Event event)
     return true;
   }
 
+  if (event == Event::Character('/'))
+  {
+    m_search_modal_open = true;
+    return true;
+  }
+
   if (event == Event::c)
   {
-    if (!m_session.is_paused())
-          {
-            m_status_msg = "Pause a música para carregar a fila salva no arquivo.";
-          }
-    else
+    if (!m_session.get_queue().empty())
     {
-      m_status_msg = m_session.load_queue();
+      m_session.clear_queue();
+      m_status_msg = "Fila limpa.";
     }
     return true;
   }
 
-  if (event == Event::e)
+  if (event == Event::d)
   {
-    m_session.save_queue();
-    m_status_msg = "Fila atual salva ao arquivo.";
+    if (m_selected_tab == 1 && !m_session.get_queue().empty())
+    {
+      std::string removed_title = m_queue_titles.at(m_queue_entry);
+      m_session.remove_from_queue((size_t)m_queue_entry);
+
+      if (m_session.get_queue().empty())
+        m_queue_entry = 0;
+      else if ((size_t)m_queue_entry >= m_session.get_queue().size())
+        m_queue_entry = m_session.get_queue().size() - 1;
+
+      m_status_msg = std::format("'{}' removida da fila.", removed_title);
+    }
     return true;
   }
-  
+
   if (event == Event::ArrowRightCtrl)
   {
     // Não está atualizando o título na hora pois o método que altera o current
