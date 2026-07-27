@@ -130,7 +130,22 @@ void MSession::async_play(const std::string &title)
   m_play_thread = std::thread([this, title] { this->play(title); });
 }
 
-std::string MSession::restore_queue()
+void MSession::save_queue()
+{
+  std::ofstream queue_file("assets/queue.txt");
+  auto first = get_queue().begin();
+  auto last = get_queue().end();
+
+  while (first != last)
+  {
+    queue_file << first->lock()->title << '\n';
+    first++;
+  }
+
+  queue_file.close();
+}
+
+std::string MSession::load_queue()
 {
   std::ifstream queue_file("assets/queue.txt");
   if (!queue_file.is_open()) {return "Não foi possível ler a fila salva.";}

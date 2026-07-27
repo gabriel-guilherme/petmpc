@@ -316,12 +316,18 @@ bool Window::handle(Event event)
   {
     if (!m_session.is_paused())
           {
-            m_status_msg = "Pause a música para carregar a fila salva.";
+            m_status_msg = "Pause a música para carregar a fila salva no arquivo.";
           }
     else
     {
-      m_status_msg = m_session.restore_queue();
+      m_status_msg = m_session.load_queue();
     }
+  }
+
+  if (event == Event::e)
+  {
+    m_session.save_queue();
+    m_status_msg = "Fila atual salva ao arquivo.";
   }
 
   return false;
