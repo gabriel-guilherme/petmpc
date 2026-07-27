@@ -85,21 +85,6 @@ void MSession::clear_queue()
   m_current.reset();
 }
 
-void MSession::remove_from_queue(size_t index)
-{
-  if (index >= m_queue->size())
-    return;
-
-  if (auto current = m_current.lock())
-  {
-    if (auto removed = m_queue->at(index).lock())
-      if (removed == current)
-        m_current.reset();
-  }
-
-  m_queue->erase(m_queue->begin() + index);
-}
-
 void MSession::sort_queue(sort_criteria crit)
 {
   if (crit == sort_criteria::TITLE)
@@ -129,28 +114,6 @@ std::vector<std::shared_ptr<Music>> MSession::sort_library(sort_criteria crit)
   return vec;
 }
 
-std::vector<std::shared_ptr<Music>>
-MSession::search_library(const std::string &query)
-{
-  std::vector<std::shared_ptr<Music>> result;
-
-  std::string needle = query;
-  std::transform(needle.begin(), needle.end(), needle.begin(), ::tolower);
-
-  // busca linear: percorre a biblioteca inteira comparando substrings
-  for (auto it = m_database->begin(); it != m_database->end(); it++)
-  {
-    std::string haystack = (*it)->title;
-    std::transform(haystack.begin(), haystack.end(), haystack.begin(),
-                   ::tolower);
-
-    if (haystack.find(needle) != std::string::npos)
-      result.push_back(*it);
-  }
-
-  return result;
-}
-
 void MSession::shuffle_queue()
 {
   auto rng = std::default_random_engine{};
@@ -165,6 +128,41 @@ void MSession::async_play(const std::string &title)
 
   m_stop.store(false);
   m_play_thread = std::thread([this, title] { this->play(title); });
+}
+
+void MSession::save_queue()
+{
+  std::ofstream queue_file("assets/queue.txt");
+  auto first = get_queue().begin();
+  auto last = get_queue().end();
+
+  while (first != last)
+  {
+    queue_file << first->lock()->title << '\n';
+    first++;
+  }
+
+  queue_file.close();
+}
+
+std::string MSession::load_queue()
+{
+  std::ifstream queue_file("assets/queue.txt");
+  if (!queue_file.is_open()) {return "Não foi possível ler a fila salva.";}
+  clear_queue();
+  
+  string s;
+
+  while(getline(queue_file, s))
+  {
+    auto music_it = std::find_if(get_database().begin(),
+                                          get_database().end(),
+                                          [&s](std::shared_ptr<Music> ptr)
+                                          { return ptr->title == s; });
+    add_to_queue(*music_it);
+  }
+  queue_file.close();
+  return "Fila carregada do arquivo.";
 }
 
 bool MSession::play(const std::string &title)
