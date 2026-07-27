@@ -35,9 +35,9 @@ private:
   std::vector<std::string> m_queue_titles;
   bool m_sort_modal_open = false;
   int m_sort_modal_selected_option = 0;
+  bool m_search_modal_open = false;
+  std::string m_search_query;
 
-  // TODO: remover esse campo aqui e testar com variável normal no
-  // build_lib_component
   ftxui::Component m_lib_menu;
   ftxui::Component m_modal_component;
   ftxui::Component m_main_layout;
@@ -46,6 +46,7 @@ private:
   ftxui::Component build_library_component();
   ftxui::Component build_queue_component();
   ftxui::Component build_sort_modal();
+  ftxui::Component build_search_modal();
   ftxui::Component construct_layout();
   ftxui::Element render_row(const Music &, bool);
   bool handle(ftxui::Event event);

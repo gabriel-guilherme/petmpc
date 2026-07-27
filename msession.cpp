@@ -1,6 +1,6 @@
 #include "msession.hpp"
 #include "sortingLib/sorting.hpp"
-#include "string"
+#include <string>
 #include <algorithm>
 #include <format>
 #include <fstream>
@@ -85,6 +85,21 @@ void MSession::clear_queue()
   m_current.reset();
 }
 
+void MSession::remove_from_queue(size_t index)
+{
+  if (index >= m_queue->size())
+    return;
+
+  if (auto current = m_current.lock())
+  {
+    if (auto removed = m_queue->at(index).lock())
+      if (removed == current)
+        m_current.reset();
+  }
+
+  m_queue->erase(m_queue->begin() + index);
+}
+
 void MSession::sort_queue(sort_criteria crit)
 {
   if (crit == sort_criteria::TITLE)
@@ -112,6 +127,27 @@ std::vector<std::shared_ptr<Music>> MSession::sort_library(sort_criteria crit)
                        cmp_lib_by_duration);
 
   return vec;
+}
+
+std::vector<std::shared_ptr<Music>>
+MSession::search_library(const std::string &query)
+{
+  std::vector<std::shared_ptr<Music>> result;
+
+  std::string needle = query;
+  std::transform(needle.begin(), needle.end(), needle.begin(), ::tolower);
+
+  for (auto it = m_database->begin(); it != m_database->end(); it++)
+  {
+    std::string haystack = (*it)->title;
+    std::transform(haystack.begin(), haystack.end(), haystack.begin(),
+                   ::tolower);
+
+    if (haystack.find(needle) != std::string::npos)
+      result.push_back(*it);
+  }
+
+  return result;
 }
 
 void MSession::shuffle_queue()
@@ -151,9 +187,9 @@ std::string MSession::load_queue()
   if (!queue_file.is_open()) {return "Não foi possível ler a fila salva.";}
   clear_queue();
   
-  string s;
+  std::string s;
 
-  while(getline(queue_file, s))
+  while(std::getline(queue_file, s))
   {
     auto music_it = std::find_if(get_database().begin(),
                                           get_database().end(),
@@ -172,8 +208,6 @@ bool MSession::play(const std::string &title)
     return false;
   }
 
-  // TODO: trocar função lambda bem como fazer com que sort de queue reflita na
-  // reprodução atual.
   auto duplicate = *m_queue;
   auto it = std::find_if(duplicate.begin(), duplicate.end(),
                          [&](std::weak_ptr<Music> ptr)
@@ -220,7 +254,6 @@ bool MSession::toggle_paused()
 
 void MSession::stop_track() { m_stop.store(true); }
 
-// TODO: mudar o current pra um current_idx e o acesso ser O(1)?!
 bool MSession::advance_track()
 {
   if (auto music = m_current.lock())
@@ -268,6 +301,7 @@ const std::string MSession::get_queue_size_msg()
              ? "Fila vazia."
              : std::format("Tamanho da fila: {}", m_queue->size());
 }
+
 const std::unordered_set<std::shared_ptr<Music>> &MSession::get_database() const
 {
   return *m_database;

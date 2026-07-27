@@ -133,6 +133,8 @@ O programa não aceita argumentos de linha de comando; qualquer argumento extra 
 | `/`               | Abrir modal de busca por título na biblioteca     |
 | `c`               | Limpar a fila de reprodução                       |
 | `d`               | Remover da fila a música atualmente selecionada   |
+| `l`               | Carregar fila de reprodução salva                 |
+| `e`               | Salvar fila de reprodução atual para o arquivo    |
 | `Ctrl` + `→`      | Avançar para a próxima faixa da fila              |
 | `Ctrl` + `←`      | Retroceder para a faixa anterior da fila          |
 
