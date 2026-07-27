@@ -322,12 +322,40 @@ bool Window::handle(Event event)
     {
       m_status_msg = m_session.load_queue();
     }
+    return true;
   }
 
   if (event == Event::e)
   {
     m_session.save_queue();
     m_status_msg = "Fila atual salva ao arquivo.";
+    return true;
+  }
+  
+  if (event == Event::ArrowRightCtrl)
+  {
+    // Não está atualizando o título na hora pois o método que altera o current
+    // roda em uma thread separada; O ideal é que quando houver o método "find"
+    // na queue utilizemos ele na async_play pra encontrar a música e ajustar
+    // Para não ser mais na play.
+    if (m_session.advance_track())
+      m_status_msg = std::format("Reproduzindo: '{}'",
+                                 m_session.get_current().lock()->title);
+    else
+      m_status_msg = "Não foi possível avançar";
+
+    return true;
+  }
+
+  if (event == Event::ArrowLeftCtrl)
+  {
+    if (m_session.rewind_track())
+      m_status_msg = std::format("Reproduzindo: '{}'",
+                                 m_session.get_current().lock()->title);
+    else
+      m_status_msg = "Não foi possível retroceder";
+
+    return true;
   }
 
   return false;

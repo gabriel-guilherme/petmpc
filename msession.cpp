@@ -220,6 +220,46 @@ bool MSession::toggle_paused()
 
 void MSession::stop_track() { m_stop.store(true); }
 
+// TODO: mudar o current pra um current_idx e o acesso ser O(1)?!
+bool MSession::advance_track()
+{
+  if (auto music = m_current.lock())
+  {
+    for (auto m_it = m_queue->begin(); m_it != m_queue->end(); m_it++)
+    {
+      if (auto it = m_it->lock())
+      {
+        if (it == music && m_it + 1 != m_queue->end())
+        {
+          async_play((m_it + 1)->lock()->title); 
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
+bool MSession::rewind_track()
+{
+  if (auto music = m_current.lock())
+  {
+    for (auto m_it = m_queue->begin(); m_it != m_queue->end(); m_it++)
+    {
+      if (auto it = m_it->lock())
+      {
+        if (it == music && m_it != m_queue->begin())
+        {
+          async_play((m_it - 1)->lock()->title);
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
 std::weak_ptr<Music> &MSession::get_current() { return m_current; }
 
 const std::string MSession::get_queue_size_msg()
