@@ -24,4 +24,10 @@ struct Music
   {
     return std::string("assets/" + this->title + ".mp3");
   };
+
+  bool operator==(const Music &other) const
+  {
+    return this->title == other.title && this->genre == other.genre &&
+           this->duration == other.duration && this->year == other.year;
+  }
 };

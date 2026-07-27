@@ -40,6 +40,8 @@ public:
   bool is_paused();
   bool toggle_paused();
   void stop_track();
+  bool advance_track();
+  bool rewind_track();
   std::weak_ptr<Music> &get_current();
   const std::string get_queue_size_msg();
   const std::unordered_set<std::shared_ptr<Music>> &get_database() const;
