@@ -37,6 +37,7 @@ public:
   std::vector<std::shared_ptr<Music>> sort_library(sort_criteria);
   void sort_queue(sort_criteria);
   void shuffle_queue();
+  std::string restore_queue();
   bool is_paused();
   bool toggle_paused();
   void stop_track();

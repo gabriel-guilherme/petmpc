@@ -130,6 +130,26 @@ void MSession::async_play(const std::string &title)
   m_play_thread = std::thread([this, title] { this->play(title); });
 }
 
+std::string MSession::restore_queue()
+{
+  std::ifstream queue_file("assets/queue.txt");
+  if (!queue_file.is_open()) {return "Não foi possível ler a fila salva.";}
+  clear_queue();
+  
+  string s;
+
+  while(getline(queue_file, s))
+  {
+    auto music_it = std::find_if(get_database().begin(),
+                                          get_database().end(),
+                                          [&s](std::shared_ptr<Music> ptr)
+                                          { return ptr->title == s; });
+    add_to_queue(*music_it);
+  }
+  queue_file.close();
+  return "Fila carregada do arquivo.";
+}
+
 bool MSession::play(const std::string &title)
 {
   if (m_queue->empty())
