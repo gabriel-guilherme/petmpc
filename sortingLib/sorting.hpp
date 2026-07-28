@@ -135,5 +135,30 @@ void merge(DataType *first, DataType *last, Compare cmp)
 }
 //}}} MERGE SORT
 
+//{{{ QUICK SORT
+
+/// [DIA 2 - Ordenação] TODO:
+/// Implemente o Quick Sort no intervalo [first, last).
+///
+/// Dicas:
+/// 1. Caso base: se `last - first <= 1`, o intervalo já está ordenado
+///    (0 ou 1 elemento), então apenas retorne.
+/// 2. Escolha um pivô (o último elemento, `*(last - 1)`, é a escolha mais
+///    simples).
+/// 3. Particione o intervalo: mova pra frente os elementos que, comparados
+///    com o pivô usando `cmp`, deveriam vir antes dele; o pivô fica no
+///    "meio", entre a partição da esquerda e a da direita.
+/// 4. Chame quick_sort recursivamente nas duas partições, sem incluir o
+///    pivô nelas.
+///
+/// Pode usar std::swap (já usado no insertion_sort acima) pra trocar
+/// elementos de posição durante o particionamento.
+template <typename DataType, typename Compare>
+void quick_sort(DataType *first, DataType *last, Compare cmp)
+{
+}
+
+//}}} QUICK SORT
+
 }; // namespace sa
 #endif // SORTING_H

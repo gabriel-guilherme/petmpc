@@ -55,6 +55,17 @@ u8 MSession::init()
     }
   }
 
+  // [DIA 4 - Dicionário/Map] TODO:
+  // m_database é um std::unordered_set: ótimo pra checar existência e
+  // iterar, mas não permite achar uma música pelo título sem varrer tudo
+  // (é exatamente isso que load_queue() faz hoje, um find_if pra CADA
+  // linha do arquivo salvo -- O(n) por busca).
+  //
+  // Preencha m_index com uma entrada por música: a chave é o título e o
+  // valor é o próprio std::shared_ptr<Music>, pra transformar essa busca
+  // em O(1) amortizado. Percorra m_database (já populado acima) e insira
+  // cada música em m_index.
+
   return 0;
 }
 
@@ -87,17 +98,17 @@ void MSession::clear_queue()
 
 void MSession::remove_from_queue(size_t index)
 {
-  if (index >= m_queue->size())
-    return;
-
-  if (auto current = m_current.lock())
-  {
-    if (auto removed = m_queue->at(index).lock())
-      if (removed == current)
-        m_current.reset();
-  }
-
-  m_queue->erase(m_queue->begin() + index);
+  // [DIA 3 - TAD Fila] TODO:
+  // Remova o elemento de índice `index` de m_queue.
+  //
+  // Dicas:
+  // 1. Se `index` estiver fora dos limites de m_queue, apenas retorne (não
+  //    faça nada).
+  // 2. Se a música removida for a que está tocando no momento (m_current),
+  //    lembre-se de resetar m_current -- senão o player fica com uma
+  //    referência "fantasma" pra uma música que não está mais na fila.
+  // 3. std::vector já tem um método pra remover um elemento em uma posição
+  //    específica. Dê uma olhada em `erase`.
 }
 
 void MSession::sort_queue(sort_criteria crit)
@@ -132,21 +143,20 @@ std::vector<std::shared_ptr<Music>> MSession::sort_library(sort_criteria crit)
 std::vector<std::shared_ptr<Music>>
 MSession::search_library(const std::string &query)
 {
+  // [DIA 2 - Busca Linear] TODO:
+  // Percorra m_database inteiro (é um unordered_set, então não tem acesso
+  // indexado -- use um iterador) e devolva um vetor com todas as músicas
+  // cujo título CONTENHA `query` como substring, ignorando maiúsculas de
+  // minúsculas.
+  //
+  // Dicas:
+  // 1. std::transform + ::tolower deixam uma string inteira minúscula.
+  // 2. std::string::find retorna std::string::npos quando não encontra a
+  //    substring.
+  // 3. Lembre-se: comparar "abc".find("ABC") não funciona, os dois lados
+  //    precisam estar no mesmo caso.
+
   std::vector<std::shared_ptr<Music>> result;
-
-  std::string needle = query;
-  std::transform(needle.begin(), needle.end(), needle.begin(), ::tolower);
-
-  for (auto it = m_database->begin(); it != m_database->end(); it++)
-  {
-    std::string haystack = (*it)->title;
-    std::transform(haystack.begin(), haystack.end(), haystack.begin(),
-                   ::tolower);
-
-    if (haystack.find(needle) != std::string::npos)
-      result.push_back(*it);
-  }
-
   return result;
 }
 
@@ -191,6 +201,17 @@ std::string MSession::load_queue()
 
   while(std::getline(queue_file, s))
   {
+    // [DIA 4 - Dicionário/Map] TODO:
+    // Troque a busca abaixo por uma consulta em m_index (o mapa que você
+    // preencheu em init()). Em vez de varrer m_database inteiro pra cada
+    // linha do arquivo, procure `s` diretamente em m_index.
+    //
+    // Dicas:
+    // 1. unordered_map::find retorna um iterador; compare com m_index.end()
+    //    pra saber se a chave existe.
+    // 2. Se a música salva não existir mais na biblioteca (arquivo
+    //    corrompido, CSV editado, etc.), pule a linha em vez de travar --
+    //    não chame add_to_queue com um ponteiro inválido.
     auto music_it = std::find_if(get_database().begin(),
                                           get_database().end(),
                                           [&s](std::shared_ptr<Music> ptr)

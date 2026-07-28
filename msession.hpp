@@ -7,6 +7,7 @@
 #include <iostream>
 #include <memory>
 #include <thread>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
@@ -15,6 +16,9 @@ class MSession
 private:
   std::unique_ptr<std::unordered_set<std::shared_ptr<Music>>> m_database;
   std::unique_ptr<std::vector<std::weak_ptr<Music>>> m_queue;
+  // Índice título -> música, usado pra evitar buscas lineares repetidas em
+  // m_database (ver TODO no .cpp, na função init() e em load_queue()).
+  std::unordered_map<std::string, std::shared_ptr<Music>> m_index;
   std::weak_ptr<Music> m_current;
   std::unique_ptr<MPlayer> m_player;
   std::thread m_play_thread;
