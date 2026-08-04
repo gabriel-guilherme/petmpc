@@ -464,6 +464,16 @@ bool Window::handle(Event event)
 
     return true;
   }
+  if (event == Event::v)
+  {
+    if (m_session.rewind_to_history())
+      m_status_msg = std::format("Voltando para: '{}'",
+                                 m_session.get_current().lock()->title);
+    else
+      m_status_msg = "Histórico vazio -- nada pra voltar.";
+
+    return true;
+  }
 
   return false;
 }

@@ -55,16 +55,40 @@ u8 MSession::init()
     }
   }
 
-  // [DIA 4 - Dicionário/Map] TODO:
-  // m_database é um std::unordered_set: ótimo pra checar existência e
-  // iterar, mas não permite achar uma música pelo título sem varrer tudo
-  // (é exatamente isso que load_queue() faz hoje, um find_if pra CADA
-  // linha do arquivo salvo -- O(n) por busca).
-  //
-  // Preencha m_index com uma entrada por música: a chave é o título e o
-  // valor é o próprio std::shared_ptr<Music>, pra transformar essa busca
-  // em O(1) amortizado. Percorra m_database (já populado acima) e insira
-  // cada música em m_index.
+  // =============================================================================
+  // [MISSÃO 5.3 - INÍCIO: Índice título -> música (revisão do Dia 4)]
+  // =============================================================================
+
+  // DICA 0: m_database é um unordered_set: ótimo pra checar existência e
+  // iterar, mas não permite achar uma música pelo título sem varrer tudo.
+  // load_queue() (mais abaixo) faz exatamente isso hoje -- um find_if pra
+  // CADA linha do arquivo salvo, ou seja, O(n) por busca.
+
+  // DICA 1: Percorra m_database (já populado acima) com um laço for-each.
+
+  // DICA 2: Preencha m_index com uma entrada por música: a chave é o
+  // título (music->title) e o valor é o próprio std::shared_ptr<Music>.
+
+  // =============================================================================
+  // [MISSÃO 5.3 - FIM]
+  // =============================================================================
+
+  // =============================================================================
+  // [MISSÃO 5.2 - INÍCIO: Índice gênero -> músicas (revisão do Dia 4)]
+  // =============================================================================
+
+  // DICA 0: Diferente de m_index (uma música por chave), aqui cada chave
+  // (gênero) guarda uma LISTA de músicas daquele gênero.
+
+  // DICA 1: Percorra m_database com um laço for-each.
+
+  // DICA 2: unordered_map::operator[] cria o vector vazio automaticamente
+  // na primeira vez que uma chave nova (um gênero novo) é acessada -- você
+  // só precisa dar push_back nele: m_genre_index[music->genre].push_back(music);
+
+  // =============================================================================
+  // [MISSÃO 5.2 - FIM]
+  // =============================================================================
 
   return 0;
 }
@@ -96,20 +120,30 @@ void MSession::clear_queue()
   m_current.reset();
 }
 
+// =============================================================================
+// [MISSÃO 3.1 - INÍCIO: Remoção de uma música específica da fila]
+// =============================================================================
+
 void MSession::remove_from_queue(size_t index)
 {
-  // [DIA 3 - TAD Fila] TODO:
-  // Remova o elemento de índice `index` de m_queue.
-  //
-  // Dicas:
-  // 1. Se `index` estiver fora dos limites de m_queue, apenas retorne (não
-  //    faça nada).
-  // 2. Se a música removida for a que está tocando no momento (m_current),
-  //    lembre-se de resetar m_current -- senão o player fica com uma
-  //    referência "fantasma" pra uma música que não está mais na fila.
-  // 3. std::vector já tem um método pra remover um elemento em uma posição
-  //    específica. Dê uma olhada em `erase`.
+  (void)index; // remova essa linha depois que implementar a função
+
+  // DICA 0: Se 'index' estiver fora dos limites de m_queue (index >=
+  // m_queue->size()), apenas retorne -- não faça nada.
+
+  // DICA 1: Se a música removida for a que está tocando no momento
+  // (m_current), resete m_current -- senão o player fica com uma
+  // referência "fantasma" pra uma música que não está mais na fila. Use
+  // m_current.lock() e m_queue->at(index).lock() pra comparar os dois
+  // shared_ptr resultantes.
+
+  // DICA 2: std::vector::erase remove um elemento numa posição específica:
+  // m_queue->erase(m_queue->begin() + index);
 }
+
+// =============================================================================
+// [MISSÃO 3.1 - FIM]
+// =============================================================================
 
 void MSession::sort_queue(sort_criteria crit)
 {
@@ -140,25 +174,76 @@ std::vector<std::shared_ptr<Music>> MSession::sort_library(sort_criteria crit)
   return vec;
 }
 
+// =============================================================================
+// [MISSÃO 2.1 - INÍCIO: Busca Linear por substring no título]
+// =============================================================================
+
 std::vector<std::shared_ptr<Music>>
 MSession::search_library(const std::string &query)
 {
-  // [DIA 2 - Busca Linear] TODO:
-  // Percorra m_database inteiro (é um unordered_set, então não tem acesso
-  // indexado -- use um iterador) e devolva um vetor com todas as músicas
-  // cujo título CONTENHA `query` como substring, ignorando maiúsculas de
-  // minúsculas.
-  //
-  // Dicas:
-  // 1. std::transform + ::tolower deixam uma string inteira minúscula.
-  // 2. std::string::find retorna std::string::npos quando não encontra a
-  //    substring.
-  // 3. Lembre-se: comparar "abc".find("ABC") não funciona, os dois lados
-  //    precisam estar no mesmo caso.
+  (void)query; // remova essa linha depois que implementar a função
+
+  // DICA 0: Siga o exemplo da função 'busca_sequencial' mostrada no
+  // material, mas adaptada: em vez de comparar linhas inteiras, você quer
+  // saber se o título de cada música CONTÉM 'query' como substring.
+
+  // DICA 1: m_database é um unordered_set, então não tem acesso indexado
+  // -- percorra com um iterador (m_database->begin() até ->end()).
+
+  // DICA 2: A busca deve ignorar maiúsculas/minúsculas. std::transform +
+  // ::tolower deixam uma string inteira minúscula; aplique nos dois lados
+  // (no título e em 'query') antes de comparar.
+
+  // DICA 3: std::string::find retorna std::string::npos quando não
+  // encontra a substring -- é assim que você sabe se deve incluir a
+  // música no resultado.
 
   std::vector<std::shared_ptr<Music>> result;
   return result;
 }
+
+// =============================================================================
+// [MISSÃO 2.1 - FIM]
+// =============================================================================
+
+// =============================================================================
+// [MISSÃO 2.2 - INÍCIO: Busca Binária por título exato]
+// =============================================================================
+
+long MSession::binary_search_library(
+    const std::vector<std::shared_ptr<Music>> &sorted,
+    const std::string &title) const
+{
+  (void)sorted;
+  (void)title; // remova essas linhas depois que implementar a função
+
+  // Pré-requisito: 'sorted' já deve estar ordenado por título (ex.: o
+  // retorno de sort_library(sort_criteria::TITLE)). Esta função assume a
+  // ordenação e não faz verificações preventivas.
+
+  // DICA 0: Siga o exemplo da função 'busca_binaria' mostrada no material.
+
+  // DICA 1: Declare 'low' e 'high' como long. 'high' é o último índice
+  // válido: static_cast<long>(sorted.size()) - 1.
+
+  // DICA 2: Dentro de um laço while (low <= high), calcule 'mid' a partir
+  // de 'low' e 'high' (some 'low' à metade da diferença pra evitar
+  // transbordo). Acesse o elemento com sorted[static_cast<size_t>(mid)].
+
+  // DICA 3: Compare sorted[mid]->title com 'title'. Se forem iguais,
+  // retorne 'mid'. Se o título do meio for menor, continue na metade
+  // direita (low = mid + 1); caso contrário, continue na esquerda
+  // (high = mid - 1).
+
+  // DICA 4: Se o vetor estiver vazio ou o laço terminar sem achar, retorne
+  // -1.
+
+  return -1;
+}
+
+// =============================================================================
+// [MISSÃO 2.2 - FIM]
+// =============================================================================
 
 void MSession::shuffle_queue()
 {
@@ -201,17 +286,11 @@ std::string MSession::load_queue()
 
   while(std::getline(queue_file, s))
   {
-    // [DIA 4 - Dicionário/Map] TODO:
-    // Troque a busca abaixo por uma consulta em m_index (o mapa que você
-    // preencheu em init()). Em vez de varrer m_database inteiro pra cada
-    // linha do arquivo, procure `s` diretamente em m_index.
-    //
-    // Dicas:
-    // 1. unordered_map::find retorna um iterador; compare com m_index.end()
-    //    pra saber se a chave existe.
-    // 2. Se a música salva não existir mais na biblioteca (arquivo
-    //    corrompido, CSV editado, etc.), pule a linha em vez de travar --
-    //    não chame add_to_queue com um ponteiro inválido.
+    // Missão 5.3: depois que m_index estiver preenchido (ver init()),
+    // troque a busca abaixo por uma consulta direta em m_index -- em vez
+    // de varrer m_database inteiro pra cada linha do arquivo, procure 's'
+    // com m_index.find(s) e confira contra m_index.end(). Se a música
+    // salva não existir mais na biblioteca, pule a linha em vez de travar.
     auto music_it = std::find_if(get_database().begin(),
                                           get_database().end(),
                                           [&s](std::shared_ptr<Music> ptr)
@@ -285,7 +364,11 @@ bool MSession::advance_track()
       {
         if (it == music && m_it + 1 != m_queue->end())
         {
-          async_play((m_it + 1)->lock()->title); 
+          // Infra da Missão 3.2: registra a música atual no histórico
+          // antes de trocar pra próxima, pra que rewind_to_history() (ver
+          // abaixo) tenha o que desempilhar depois.
+          m_history.push(music->title);
+          async_play((m_it + 1)->lock()->title);
           return true;
         }
       }
@@ -314,6 +397,32 @@ bool MSession::rewind_track()
   return false;
 }
 
+// =============================================================================
+// [MISSÃO 3.2 - INÍCIO: Voltar pra música anterior usando o histórico (Pilha)]
+// =============================================================================
+
+bool MSession::rewind_to_history()
+{
+  // DICA 0: Diferente de rewind_track() (que usa a posição na fila),
+  // aqui você usa m_history -- a pilha (std::stack<std::string>)
+  // preenchida em advance_track() com os títulos das músicas já tocadas.
+
+  // DICA 1: Primeiro, trate o caso de a pilha estar vazia (m_history.empty()):
+  // não há pra onde voltar, então retorne false.
+
+  // DICA 2: Se não estiver vazia, o título do topo é m_history.top().
+  // Guarde-o numa variável antes de desempilhar com m_history.pop() --
+  // depois do pop() o valor de top() não existe mais.
+
+  // DICA 3: Chame async_play com o título guardado, e retorne true.
+
+  return false;
+}
+
+// =============================================================================
+// [MISSÃO 3.2 - FIM]
+// =============================================================================
+
 std::weak_ptr<Music> &MSession::get_current() { return m_current; }
 
 const std::string MSession::get_queue_size_msg()
@@ -331,6 +440,27 @@ const std::unordered_set<std::shared_ptr<Music>> &MSession::get_database() const
 const std::vector<std::weak_ptr<Music>> &MSession::get_queue() const
 {
   return *m_queue;
+}
+
+// Missão 5.2: depois que m_genre_index estiver preenchido (ver init()),
+// estas duas funções te dão acesso a ele pronto pra uso pela UI (uma
+// lista de gêneros disponíveis, e as músicas de um gênero específico).
+// Não precisam de laços de busca -- é só consultar o mapa.
+std::vector<std::string> MSession::get_genres() const
+{
+  std::vector<std::string> genres;
+  for (const auto &[genre, musics] : m_genre_index)
+    genres.push_back(genre);
+  return genres;
+}
+
+std::vector<std::shared_ptr<Music>>
+MSession::get_by_genre(const std::string &genre) const
+{
+  auto it = m_genre_index.find(genre);
+  if (it == m_genre_index.end())
+    return {};
+  return it->second;
 }
 
 bool cmp_lib_by_title(const std::shared_ptr<Music> &m1,

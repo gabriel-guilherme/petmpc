@@ -6,6 +6,7 @@
 #include <format>
 #include <iostream>
 #include <memory>
+#include <stack>
 #include <thread>
 #include <unordered_map>
 #include <unordered_set>
@@ -16,9 +17,15 @@ class MSession
 private:
   std::unique_ptr<std::unordered_set<std::shared_ptr<Music>>> m_database;
   std::unique_ptr<std::vector<std::weak_ptr<Music>>> m_queue;
-  // Índice título -> música, usado pra evitar buscas lineares repetidas em
-  // m_database (ver TODO no .cpp, na função init() e em load_queue()).
+  // Índice título -> música (Missão 5.3) e índice gênero -> músicas
+  // (Missão 5.2). Ambos usados pra evitar buscas lineares repetidas em
+  // m_database -- ver TODOs no .cpp.
   std::unordered_map<std::string, std::shared_ptr<Music>> m_index;
+  std::unordered_map<std::string, std::vector<std::shared_ptr<Music>>>
+      m_genre_index;
+  // Histórico de reprodução (Missão 3.2): guarda os títulos das músicas
+  // tocadas antes da atual, na ordem em que foram tocadas.
+  std::stack<std::string> m_history;
   std::weak_ptr<Music> m_current;
   std::unique_ptr<MPlayer> m_player;
   std::thread m_play_thread;
@@ -41,6 +48,8 @@ public:
   void async_play(const std::string &);
   std::vector<std::shared_ptr<Music>> sort_library(sort_criteria);
   std::vector<std::shared_ptr<Music>> search_library(const std::string &);
+  long binary_search_library(const std::vector<std::shared_ptr<Music>> &,
+                             const std::string &) const;
   void sort_queue(sort_criteria);
   void shuffle_queue();
   void save_queue();
@@ -50,6 +59,9 @@ public:
   void stop_track();
   bool advance_track();
   bool rewind_track();
+  bool rewind_to_history();
+  std::vector<std::string> get_genres() const;
+  std::vector<std::shared_ptr<Music>> get_by_genre(const std::string &) const;
   std::weak_ptr<Music> &get_current();
   const std::string get_queue_size_msg();
   const std::unordered_set<std::shared_ptr<Music>> &get_database() const;

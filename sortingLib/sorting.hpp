@@ -135,28 +135,75 @@ void merge(DataType *first, DataType *last, Compare cmp)
 }
 //}}} MERGE SORT
 
+//{{{ SELECTION SORT
+
+// =============================================================================
+// [MISSÃO 2.3 - INÍCIO: Ordenação por Seleção (Selection Sort)]
+// =============================================================================
+
+/// Implementation of the Selection Sort algorithm.
+template <typename DataType, typename Compare>
+void selection_sort(DataType *first, DataType *last, Compare cmp)
+{
+  (void)first;
+  (void)last;
+  (void)cmp; // remova essas linhas depois que implementar a função
+
+  // DICA 0: Siga a mesma ideia do insertion_sort logo acima, mas com outra
+  // estratégia: para cada posição 'i' de first até last-1, ache o MENOR
+  // elemento (segundo cmp) entre 'i' e 'last', e só então troque-o pra
+  // posição 'i'.
+
+  // DICA 1: Use um ponteiro auxiliar (ex.: 'min_it') pra guardar, durante a
+  // varredura interna, qual elemento é o menor encontrado até agora.
+
+  // DICA 2: std::swap(*i, *min_it) troca os dois elementos de posição --
+  // já usado no insertion_sort acima.
+
+  // DICA 3: Vetores com 0 ou 1 elemento já estão ordenados; o laço externo
+  // simplesmente não roda nesses casos, não precisa de tratamento especial.
+}
+
+// =============================================================================
+// [MISSÃO 2.3 - FIM]
+// =============================================================================
+
+//}}} SELECTION SORT
+
 //{{{ QUICK SORT
 
-/// [DIA 2 - Ordenação] TODO:
-/// Implemente o Quick Sort no intervalo [first, last).
-///
-/// Dicas:
-/// 1. Caso base: se `last - first <= 1`, o intervalo já está ordenado
-///    (0 ou 1 elemento), então apenas retorne.
-/// 2. Escolha um pivô (o último elemento, `*(last - 1)`, é a escolha mais
-///    simples).
-/// 3. Particione o intervalo: mova pra frente os elementos que, comparados
-///    com o pivô usando `cmp`, deveriam vir antes dele; o pivô fica no
-///    "meio", entre a partição da esquerda e a da direita.
-/// 4. Chame quick_sort recursivamente nas duas partições, sem incluir o
-///    pivô nelas.
-///
-/// Pode usar std::swap (já usado no insertion_sort acima) pra trocar
-/// elementos de posição durante o particionamento.
+// =============================================================================
+// [MISSÃO 5.1 - INÍCIO: Ordenação Rápida (Quick Sort) -- revisão do Dia 2]
+// =============================================================================
+
 template <typename DataType, typename Compare>
 void quick_sort(DataType *first, DataType *last, Compare cmp)
 {
+  (void)first;
+  (void)last;
+  (void)cmp; // remova essas linhas depois que implementar a função
+
+  // DICA 0: Caso base -- se 'last - first <= 1', o intervalo tem 0 ou 1
+  // elemento e já está ordenado; apenas retorne.
+
+  // DICA 1: Escolha um pivô. O elemento em '*(last - 1)' é a escolha mais
+  // simples.
+
+  // DICA 2: Particione o intervalo: percorra de 'first' até o pivô (sem
+  // incluí-lo) com um ponteiro 'j'; mantenha outro ponteiro 'i' marcando o
+  // fim da região "menor que o pivô". Toda vez que cmp(*j, *pivot) for
+  // verdadeiro, troque *i e *j e avance 'i'.
+
+  // DICA 3: Depois de percorrer tudo, troque o pivô pra posição 'i' -- ele
+  // já está no lugar certo, dividindo o intervalo em duas partições.
+
+  // DICA 4: Chame quick_sort recursivamente nas duas partições resultantes,
+  // sem incluir o pivô em nenhuma delas.
 }
+
+// =============================================================================
+// [MISSÃO 5.1 - FIM]
+// =============================================================================
 
 //}}} QUICK SORT
 
