@@ -5,6 +5,7 @@
 #include <atomic>
 #include <format>
 #include <iostream>
+#include <fstream>
 #include <memory>
 #include <stack>
 #include <thread>
@@ -30,12 +31,23 @@ private:
   std::unique_ptr<MPlayer> m_player;
   std::thread m_play_thread;
 
+  std::ofstream output;
+
   const std::string ASSETS_STR = "assets/";
   u16 m_last_id = 0;
   std::atomic<bool> m_paused{true};
   std::atomic<bool> m_stop{false};
 
   bool play(const std::string &);
+  void log(const std::string &msg){
+    output.open("log.txt", std::ios::app);
+    if(!output.is_open()){
+      std::cerr << "fasdfasdf\n";
+      return;
+    }
+    output << msg << "\n";
+    output.close();
+  }
 
 public:
   MSession() : m_database(nullptr), m_queue(nullptr) {};

@@ -139,6 +139,19 @@ void MSession::remove_from_queue(size_t index)
 
   // DICA 2: std::vector::erase remove um elemento numa posição específica:
   // m_queue->erase(m_queue->begin() + index);
+
+  if(index >= m_queue->size()){
+    return;
+  }
+
+  m_queue->erase(m_queue->begin() + index);
+
+  if(m_queue->at(index).lock() == m_current.lock()){
+    m_current = m_queue->at(0);
+  }
+
+  return;
+
 }
 
 // =============================================================================
@@ -178,6 +191,10 @@ std::vector<std::shared_ptr<Music>> MSession::sort_library(sort_criteria crit)
 // [MISSÃO 2.1 - INÍCIO: Busca Linear por substring no título]
 // =============================================================================
 
+std::string debug(std::string d){
+  return d;
+}
+
 std::vector<std::shared_ptr<Music>>
 MSession::search_library(const std::string &query)
 {
@@ -198,7 +215,21 @@ MSession::search_library(const std::string &query)
   // encontra a substring -- é assim que você sabe se deve incluir a
   // música no resultado.
 
+
+
+
   std::vector<std::shared_ptr<Music>> result;
+
+  std::string d;
+
+    for (auto it = m_database->begin(); it != m_database->end(); ++it) {
+      std::cout << *it << "\n";
+      //d += it << " ";
+  }
+
+
+
+
   return result;
 }
 
@@ -415,6 +446,13 @@ bool MSession::rewind_to_history()
   // depois do pop() o valor de top() não existe mais.
 
   // DICA 3: Chame async_play com o título guardado, e retorne true.
+
+  if(m_history.empty()){
+    return false;
+  }
+
+  async_play(m_history.top());
+  m_history.pop();
 
   return false;
 }
