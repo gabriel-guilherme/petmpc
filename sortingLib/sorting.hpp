@@ -31,6 +31,20 @@ using std::pow;
 #include <string>
 using std::string;
 using std::to_string;
+#include <fstream>
+#include <iostream>
+
+
+  void log(const std::string &msg){
+    std::ofstream output;
+    output.open("log.txt", std::ios::app);
+    if(!output.is_open()){
+      std::cerr << "fasdfasdf\n";
+      return;
+    }
+    output << msg << "\n";
+    output.close();
+  }
 
 namespace sa
 { // sa = sorting algorithms
@@ -145,23 +159,25 @@ void merge(DataType *first, DataType *last, Compare cmp)
 template <typename DataType, typename Compare>
 void selection_sort(DataType *first, DataType *last, Compare cmp)
 {
-  (void)first;
-  (void)last;
-  (void)cmp; // remova essas linhas depois que implementar a função
+  if (first >= last)
+    return;
 
-  // DICA 0: Siga a mesma ideia do insertion_sort logo acima, mas com outra
-  // estratégia: para cada posição 'i' de first até last-1, ache o MENOR
-  // elemento (segundo cmp) entre 'i' e 'last', e só então troque-o pra
-  // posição 'i'.
+  for (DataType *i = first; i < last - 1; ++i)
+  {
+    DataType *min_it = i;
 
-  // DICA 1: Use um ponteiro auxiliar (ex.: 'min_it') pra guardar, durante a
-  // varredura interna, qual elemento é o menor encontrado até agora.
-
-  // DICA 2: std::swap(*i, *min_it) troca os dois elementos de posição --
-  // já usado no insertion_sort acima.
-
-  // DICA 3: Vetores com 0 ou 1 elemento já estão ordenados; o laço externo
-  // simplesmente não roda nesses casos, não precisa de tratamento especial.
+    for (DataType *j = i + 1; j < last; ++j)
+    {
+      if (cmp(*j, *min_it))
+      {
+        min_it = j;
+      }
+    }
+    if (min_it != i)
+    {
+      std::swap(*i, *min_it);
+    }
+  }
 }
 
 // =============================================================================
@@ -199,6 +215,30 @@ void quick_sort(DataType *first, DataType *last, Compare cmp)
 
   // DICA 4: Chame quick_sort recursivamente nas duas partições resultantes,
   // sem incluir o pivô em nenhuma delas.
+
+    if (last - first <= 1) {
+        return;
+    }
+
+    DataType *pivot = last - 1;
+
+    DataType *i = first;
+    for (DataType *j = first; j < pivot; ++j) {
+        if (cmp(*j, *pivot)) {
+            DataType temp = *i;
+            *i = *j;
+            *j = temp;
+            ++i;
+        }
+    }
+
+    DataType temp = *i;
+    *i = *pivot;
+    *pivot = temp;
+    DataType *pivot_pos = i;
+
+    quick_sort(first, pivot_pos, cmp);
+    quick_sort(pivot_pos + 1, last, cmp);
 }
 
 // =============================================================================

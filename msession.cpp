@@ -69,6 +69,10 @@ u8 MSession::init()
   // DICA 2: Preencha m_index com uma entrada por música: a chave é o
   // título (music->title) e o valor é o próprio std::shared_ptr<Music>.
 
+  for(auto music : *m_database){
+    m_index[music->title] = music;
+  }
+
   // =============================================================================
   // [MISSÃO 5.3 - FIM]
   // =============================================================================
@@ -85,6 +89,11 @@ u8 MSession::init()
   // DICA 2: unordered_map::operator[] cria o vector vazio automaticamente
   // na primeira vez que uma chave nova (um gênero novo) é acessada -- você
   // só precisa dar push_back nele: m_genre_index[music->genre].push_back(music);
+
+  for(auto music : *m_database){
+    m_genre_index[music->genre].push_back(music);
+    log(music->genre);
+  }
 
   // =============================================================================
   // [MISSÃO 5.2 - FIM]
@@ -162,12 +171,12 @@ void MSession::sort_queue(sort_criteria crit)
 {
   if (crit == sort_criteria::TITLE)
   {
-    sa::insertion_sort(m_queue->data(), m_queue->data() + m_queue->size(),
+    sa::quick_sort(m_queue->data(), m_queue->data() + m_queue->size(),
                        cmp_queue_by_title);
   }
   else if (crit == sort_criteria::DURATION)
   {
-    sa::insertion_sort(m_queue->data(), m_queue->data() + m_queue->size(),
+    sa::selection_sort(m_queue->data(), m_queue->data() + m_queue->size(),
                        cmp_queue_by_duration);
   }
 }
@@ -303,11 +312,42 @@ std::string MSession::load_queue()
     // de varrer m_database inteiro pra cada linha do arquivo, procure 's'
     // com m_index.find(s) e confira contra m_index.end(). Se a música
     // salva não existir mais na biblioteca, pule a linha em vez de travar.
-    auto music_it = std::find_if(get_database().begin(),
+    /*auto music_it = std::find_if(get_database().begin(),
                                           get_database().end(),
                                           [&s](std::shared_ptr<Music> ptr)
-                                          { return ptr->title == s; });
-    add_to_queue(*music_it);
+                                          { return ptr->title == s; });*/
+    
+    
+    
+    /*auto music_it = std::find(m_index.begin(), m_index.end(), s);
+    if(!music_it){ return; }*/
+
+
+
+    // auto music_it = m_index.find(s);
+
+    //auto music_it = std::find(m_index.begin(), m_index.end(), s);
+    auto music_it = m_index.find(s);
+    
+
+    if(music_it == m_index.end())
+    {
+      continue; 
+    }
+
+    add_to_queue(music_it->second);
+
+
+  // ////
+
+  //  auto it = find(vec.begin(), vec.end(), 42);
+
+  //   if (it != vec.end()) {
+  //       cout << "Encontrado!" << endl;
+  //   } else {
+  //       cout << "Nao encontrado." << endl;
+  //   }
+
   }
   queue_file.close();
   return "Fila carregada do arquivo.";
