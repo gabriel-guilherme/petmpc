@@ -245,31 +245,26 @@ long MSession::binary_search_library(
     const std::vector<std::shared_ptr<Music>> &sorted,
     const std::string &title) const
 {
-  (void)sorted;
-  (void)title; // remova essas linhas depois que implementar a função
+    long low = 0;
+    long high = static_cast<long>(sorted.size()) - 1;
 
-  // Pré-requisito: 'sorted' já deve estar ordenado por título (ex.: o
-  // retorno de sort_library(sort_criteria::TITLE)). Esta função assume a
-  // ordenação e não faz verificações preventivas.
+    while (low <= high) {
+        long mid = low + (high - low) / 2;
+        
+        const std::string& mid_title = sorted[static_cast<size_t>(mid)]->title;
 
-  // DICA 0: Siga o exemplo da função 'busca_binaria' mostrada no material.
+        if (mid_title == title) {
+            return mid;
+        } 
+        else if (mid_title < title) {
+            low = mid + 1;
+        } 
+        else {
+            high = mid - 1;
+        }
+    }
 
-  // DICA 1: Declare 'low' e 'high' como long. 'high' é o último índice
-  // válido: static_cast<long>(sorted.size()) - 1.
-
-  // DICA 2: Dentro de um laço while (low <= high), calcule 'mid' a partir
-  // de 'low' e 'high' (some 'low' à metade da diferença pra evitar
-  // transbordo). Acesse o elemento com sorted[static_cast<size_t>(mid)].
-
-  // DICA 3: Compare sorted[mid]->title com 'title'. Se forem iguais,
-  // retorne 'mid'. Se o título do meio for menor, continue na metade
-  // direita (low = mid + 1); caso contrário, continue na esquerda
-  // (high = mid - 1).
-
-  // DICA 4: Se o vetor estiver vazio ou o laço terminar sem achar, retorne
-  // -1.
-
-  return -1;
+    return -1;
 }
 
 // =============================================================================
