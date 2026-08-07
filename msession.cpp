@@ -198,37 +198,23 @@ std::string debug(std::string d){
 std::vector<std::shared_ptr<Music>>
 MSession::search_library(const std::string &query)
 {
-  (void)query; // remova essa linha depois que implementar a função
-
-  // DICA 0: Siga o exemplo da função 'busca_sequencial' mostrada no
-  // material, mas adaptada: em vez de comparar linhas inteiras, você quer
-  // saber se o título de cada música CONTÉM 'query' como substring.
-
-  // DICA 1: m_database é um unordered_set, então não tem acesso indexado
-  // -- percorra com um iterador (m_database->begin() até ->end()).
-
-  // DICA 2: A busca deve ignorar maiúsculas/minúsculas. std::transform +
-  // ::tolower deixam uma string inteira minúscula; aplique nos dois lados
-  // (no título e em 'query') antes de comparar.
-
-  // DICA 3: std::string::find retorna std::string::npos quando não
-  // encontra a substring -- é assim que você sabe se deve incluir a
-  // música no resultado.
-
-
-
 
   std::vector<std::shared_ptr<Music>> result;
 
-  std::string d;
+  std::string lower_query = query;
+  std::transform(lower_query.begin(), lower_query.end(), lower_query.begin(), ::tolower);
 
-    for (auto it = m_database->begin(); it != m_database->end(); ++it) {
-      std::cout << *it << "\n";
-      //d += it << " ";
+  for (auto it = m_database->begin(); it != m_database->end(); ++it) {
+    
+    std::string title = (*it)->title;
+
+    std::string lower_title = title;
+    std::transform(lower_title.begin(), lower_title.end(), lower_title.begin(), ::tolower);
+
+    if (lower_title.find(lower_query) != std::string::npos) {
+      result.push_back(*it);
+    }
   }
-
-
-
 
   return result;
 }
